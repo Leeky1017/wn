@@ -8,12 +8,6 @@ import type {
   SnapshotListResponse,
 } from './types'
 
-declare global {
-  interface Window {
-    writenow?: { apiBase?: string; wsBase?: string }
-  }
-}
-
 const API_BASE =
   window.writenow?.apiBase ||
   ((import.meta.env.VITE_API_BASE as string | undefined) ?? 'http://localhost:8000')
@@ -81,6 +75,16 @@ export async function listPlatforms(): Promise<PlatformInfo[]> {
 
 export async function exportHtml(payload: ExportRequest): Promise<ExportResponse> {
   return fetchJson<ExportResponse>(apiUrl('/api/export'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+}
+
+export type StoryMapNode = { title: string; detail: string; depth: number }
+
+export async function generateStoryMap(payload: { content: string; lang: 'en' | 'zh' }): Promise<{ nodes: StoryMapNode[] }> {
+  return fetchJson<{ nodes: StoryMapNode[] }>(apiUrl('/api/story-map'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),

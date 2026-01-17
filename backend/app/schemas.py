@@ -87,3 +87,17 @@ class AgentWsMessage(BaseModel):
     type: Literal["edit"]
     request: AgentEditRequest
 
+
+class StoryMapNode(BaseModel):
+    title: str
+    detail: str
+    depth: int = Field(ge=1, le=6)
+
+
+class StoryMapRequest(BaseModel):
+    content: str
+    lang: Literal["en", "zh"] = "zh"
+
+
+class StoryMapResponse(BaseModel):
+    nodes: list[StoryMapNode] = Field(default_factory=list)

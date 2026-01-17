@@ -1,46 +1,50 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
-import {
-  createFile,
-  exportHtml,
-  listFiles,
-  listPlatforms,
-  listSnapshots,
-  readFile,
-  revertSnapshot,
-  writeFile,
-  wsUrl,
-} from './app/api'
+import { createFile, exportHtml, generateStoryMap, listFiles, listPlatforms, readFile, writeFile, wsUrl } from './app/api'
 import type { AgentState, AgentWsEvent } from './app/agentTypes'
-import type { FileInfo, PlatformInfo, SnapshotInfo } from './app/types'
+import { loadSkills, saveSkills, type Skill } from './app/skills'
+import type { FileInfo } from './app/types'
 import { useDebouncedValue } from './app/useDebouncedValue'
-import { CommandPalette } from './components/CommandPalette'
+import { ActivityBar, type ActivityKey } from './components/ActivityBar'
 import { DiffModal } from './components/DiffModal'
-import { EditorPane, type EditorApi } from './components/EditorPane'
-import { FileTree } from './components/FileTree'
-import { PreviewPane } from './components/PreviewPane'
-import { SnapshotDrawer } from './components/SnapshotDrawer'
-import './styles/app.css'
+import { Composer } from './components/AIPane/Composer'
+import { SkillsPanel } from './components/AIPane/SkillsPanel'
+import { SkillPalette } from './components/SkillPalette'
+import { LibraryPane } from './components/Sidebar/LibraryPane'
+import { StoryMap, type StoryMapNode } from './components/Sidebar/StoryMap'
+import { EditorCanvas, type EditorApi } from './components/Workspace/EditorCanvas'
+import { ExportModal } from './components/Workspace/ExportModal'
+import { FormatToolbar, type EditorFormat } from './components/Workspace/FormatToolbar'
+import { PreviewPane } from './components/Workspace/PreviewPane'
+import { StatusBar } from './components/Workspace/StatusBar'
+import { TabBar } from './components/Workspace/TabBar'
+import { I18nProvider } from './i18n/context'
+import { useI18n } from './i18n/state'
 
-function App() {
+function StudioApp() {
+  const { dict, lang } = useI18n()
+
+  const [activity, setActivity] = useState<ActivityKey>('library')
   const [files, setFiles] = useState<FileInfo[]>([])
-  const [platforms, setPlatforms] = useState<PlatformInfo[]>([])
+  const [platforms, setPlatforms] = useState<{ id: string; name: string }[]>([])
+  const [platform, setPlatform] = useState<string>('wechat')
+
   const [activePath, setActivePath] = useState<string>('')
+  const [openTabs, setOpenTabs] = useState<string[]>([])
   const [content, setContent] = useState<string>('')
   const [dirty, setDirty] = useState(false)
-  const [openTabs, setOpenTabs] = useState<string[]>([])
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [previewOpen, setPreviewOpen] = useState(true)
-  const [sidebarWidth, setSidebarWidth] = useState(() => loadWidth('wn.sidebarWidth', 270, 220, 520))
-  const [previewWidth, setPreviewWidth] = useState(() => loadWidth('wn.previewWidth', 420, 320, 900))
 
-  const [platform, setPlatform] = useState<string>('wechat')
+  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit')
+  const [editorFormat, setEditorFormat] = useState<EditorFormat>('markdown')
   const [previewHtml, setPreviewHtml] = useState<string>('')
-  const [previewWarnings, setPreviewWarnings] = useState<string[]>([])
 
-  const [snapshotsOpen, setSnapshotsOpen] = useState(false)
-  const [snapshots, setSnapshots] = useState<SnapshotInfo[]>([])
+  const [composer, setComposer] = useState<string>('')
+  const [skills, setSkills] = useState<Skill[]>(() => seedSkills('zh'))
 
+  const [storyMapNodes, setStoryMapNodes] = useState<StoryMapNode[]>(() => seedStoryMapNodes('zh'))
+  const [storyMapLoading, setStoryMapLoading] = useState(false)
+
+  const [exportOpen, setExportOpen] = useState(false)
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [paletteValue, setPaletteValue] = useState('')
 
@@ -50,17 +54,11 @@ function App() {
 
   const editorRef = useRef<EditorApi | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
-  const lastOpenedPathRef = useRef<string>('')
   const saveRef = useRef<(reason: string, actor: 'user' | 'ai') => Promise<void>>(async () => {})
+  const newFileRef = useRef<() => void>(() => {})
+  const openPaletteRef = useRef<() => void>(() => {})
 
   const debouncedContent = useDebouncedValue(content, 320)
-  const wordCount = useMemo(() => {
-    const trimmed = content.trim()
-    if (!trimmed) return { chars: 0, words: 0 }
-    const words = trimmed.split(/\s+/).filter(Boolean).length
-    const chars = trimmed.replace(/\s+/g, '').length
-    return { chars, words }
-  }, [content])
 
   useEffect(() => {
     void (async () => {
@@ -73,6 +71,14 @@ function App() {
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    void (async () => {
+      const stored = await loadSkills()
+      setSkills(stored ?? seedSkills(lang))
+    })()
+    setStoryMapNodes(seedStoryMapNodes(lang))
+  }, [lang])
 
   useEffect(() => {
     let cancelled = false
@@ -94,9 +100,7 @@ function App() {
         const delay = 500 * Math.pow(1.6, retry)
         window.setTimeout(connect, delay)
       }
-      ws.onerror = () => {
-        ws.close()
-      }
+      ws.onerror = () => ws.close()
       ws.onmessage = (evt) => {
         try {
           const msg = JSON.parse(evt.data) as AgentWsEvent
@@ -110,10 +114,7 @@ function App() {
               return
             }
             case 'delta': {
-              setAgent((prev) => {
-                if (prev.kind !== 'streaming') return prev
-                return { ...prev, draft: prev.draft + msg.text }
-              })
+              setAgent((prev) => (prev.kind === 'streaming' ? { ...prev, draft: prev.draft + msg.text } : prev))
               return
             }
             case 'result': {
@@ -152,55 +153,63 @@ function App() {
   }, [])
 
   useEffect(() => {
+    openPaletteRef.current = () => setPaletteOpen(true)
+    const off = window.writenow?.onAction?.((action) => {
+      switch (action) {
+        case 'save':
+          void saveRef.current('save', 'user')
+          return
+        case 'newFile':
+          newFileRef.current()
+          return
+        case 'commandPalette':
+          openPaletteRef.current()
+          return
+        default:
+          return
+      }
+    })
+    return () => off?.()
+  }, [])
+
+  useEffect(() => {
+    if (!debouncedContent) {
+      setPreviewHtml('')
+      return
+    }
+    void (async () => {
+      const title = guessTitle(debouncedContent) ?? activePath
+      const res = await exportHtml({ platform: platform as never, content: debouncedContent, title })
+      setPreviewHtml(res.html)
+    })()
+  }, [activePath, debouncedContent, platform])
+
+  useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey
-      if (mod && e.key.toLowerCase() === 'k') {
-        e.preventDefault()
-        setPaletteOpen(true)
-        return
-      }
       if (mod && e.key.toLowerCase() === 's') {
         e.preventDefault()
         void saveRef.current('save', 'user')
         return
       }
+      if (mod && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setPaletteOpen(true)
+        return
+      }
       if (e.key === 'Escape') {
-        setPaletteOpen(false)
         setDiffOpen(false)
-        setSnapshotsOpen(false)
+        setExportOpen(false)
+        setPaletteOpen(false)
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  useEffect(() => {
-    if (!activePath) return
-    void refreshSnapshots(activePath)
-  }, [activePath])
-
-  useEffect(() => {
-    if (!debouncedContent) {
-      setPreviewHtml('')
-      setPreviewWarnings([])
-      return
-    }
-    void (async () => {
-      const title = guessTitle(debouncedContent) ?? activePath
-      const res = await exportHtml({ platform, content: debouncedContent, title })
-      setPreviewHtml(res.html)
-      setPreviewWarnings(res.warnings ?? [])
-    })()
-  }, [activePath, debouncedContent, platform])
-
   async function refreshFiles() {
     const fs = await listFiles()
     setFiles(fs)
-  }
-
-  async function refreshSnapshots(path: string) {
-    const s = await listSnapshots(path)
-    setSnapshots(s.snapshots)
   }
 
   async function openFile(path: string) {
@@ -209,7 +218,6 @@ function App() {
     }
     const res = await readFile(path)
     setOpenTabs((prev) => (prev.includes(path) ? prev : [...prev, path]))
-    lastOpenedPathRef.current = path
     setActivePath(path)
     setContent(res.content)
     setDirty(false)
@@ -220,15 +228,15 @@ function App() {
     await writeFile(activePath, { content, reason, actor })
     setDirty(false)
     await refreshFiles()
-    await refreshSnapshots(activePath)
   }
 
   saveRef.current = save
+  newFileRef.current = () => void onNewFile()
 
   async function onNewFile() {
     const name = window.prompt('New file name (ends with .md)', 'untitled.md')
     if (!name) return
-    await createFile({ path: name, template: `# ${name.replace(/\.md$/i, '')}\n\n` })
+    await createFile({ path: name, template: `# ${name.replace(/\\.md$/i, '')}\\n\\n` })
     await refreshFiles()
     await openFile(name)
   }
@@ -253,29 +261,29 @@ function App() {
     setDirty(false)
   }
 
-  function startAgentEdit(instruction: string) {
+  function startAgent(instruction: string) {
     if (!activePath) return
+    const v = instruction.trim()
+    if (!v) return
+
     let selection = editorRef.current?.getSelection() ?? { from: 0, to: 0 }
     if (selection.from === selection.to) {
       const cursor = selection.from
-      const prevBreak = content.lastIndexOf('\n\n', Math.max(0, cursor - 1))
-      const nextBreak = content.indexOf('\n\n', cursor)
+      const prevBreak = content.lastIndexOf('\\n\\n', Math.max(0, cursor - 1))
+      const nextBreak = content.indexOf('\\n\\n', cursor)
       const from = prevBreak === -1 ? 0 : prevBreak + 2
       const to = nextBreak === -1 ? content.length : nextBreak
       selection = { from, to }
     }
-    const payload = {
-      type: 'edit',
-      request: {
-        path: activePath,
-        content,
-        selection,
-        instruction,
-      },
-    }
-    setAgent({ kind: 'streaming', draft: '', instruction, log: [] })
+
+    setAgent({ kind: 'streaming', draft: '', instruction: v, log: [] })
     setDiffOpen(true)
-    wsRef.current?.send(JSON.stringify(payload))
+    wsRef.current?.send(
+      JSON.stringify({
+        type: 'edit',
+        request: { path: activePath, content, selection, instruction: v },
+      }),
+    )
   }
 
   async function applyAgentEdit() {
@@ -285,272 +293,162 @@ function App() {
     setDiffOpen(false)
     await writeFile(activePath, { content: agent.patched, reason: `ai:${agent.instruction}`, actor: 'ai' })
     await refreshFiles()
-    await refreshSnapshots(activePath)
   }
 
-  async function onRevert(snapshotId: string) {
-    if (!activePath) return
-    await revertSnapshot({ path: activePath, snapshot_id: snapshotId })
-    await openFile(activePath)
-    await refreshSnapshots(activePath)
-    setSnapshotsOpen(false)
-  }
-
-  const statusLabel = useMemo(() => {
-    if (!activePath) return 'No file'
-    if (!dirty) return 'Saved'
-    return 'Unsaved'
-  }, [activePath, dirty])
-
-  function beginResize(kind: 'sidebar' | 'preview', e: ReactPointerEvent<HTMLDivElement>) {
-    e.preventDefault()
-    e.stopPropagation()
-
-    const handle = e.currentTarget
-    handle.setPointerCapture(e.pointerId)
-
-    const startX = e.clientX
-    const startSidebar = sidebarWidth
-    const startPreview = previewWidth
-    let latestSidebar = startSidebar
-    let latestPreview = startPreview
-
-    const prevCursor = document.body.style.cursor
-    const prevUserSelect = document.body.style.userSelect
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
-
-    const onMove = (ev: PointerEvent) => {
-      if (kind === 'sidebar') {
-        const next = clamp(startSidebar + (ev.clientX - startX), 220, 520)
-        latestSidebar = next
-        setSidebarWidth(next)
-      } else {
-        const next = clamp(startPreview - (ev.clientX - startX), 320, 900)
-        latestPreview = next
-        setPreviewWidth(next)
-      }
+  async function regenerateStoryMap() {
+    setStoryMapLoading(true)
+    try {
+      const res = await generateStoryMap({ content, lang })
+      setStoryMapNodes(res.nodes)
+    } finally {
+      setStoryMapLoading(false)
     }
-
-    const onUp = () => {
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup', onUp)
-      document.body.style.cursor = prevCursor
-      document.body.style.userSelect = prevUserSelect
-
-      if (kind === 'sidebar') localStorage.setItem('wn.sidebarWidth', String(latestSidebar))
-      else localStorage.setItem('wn.previewWidth', String(latestPreview))
-    }
-
-    window.addEventListener('pointermove', onMove)
-    window.addEventListener('pointerup', onUp)
   }
+
+  const counts = useMemo(() => computeCounts(content, lang), [content, lang])
+  const statusLeft = `${counts.countLabel} · ${counts.readLabel}`
+  const statusRight = activePath ? `${dict.format}` : ''
 
   return (
-    <div className="wnShell">
-      <header className="wnTopbar">
-        <div className="wnBrand">
-          <div className="wnBrandText">
-            <div className="wnBrandName">WriteNow</div>
-            <div className="wnBrandSub">Writer IDE • Agent</div>
-          </div>
-        </div>
+    <div className="studio-container">
+      <ActivityBar active={activity} onSelect={setActivity} />
 
-        <div className="wnTopActions">
-          <button
-            className="wnBtn wnBtn--ghost"
-            onClick={() => {
-              setPaletteOpen(true)
-              editorRef.current?.focus()
-            }}
-            title="Command Palette (Ctrl/Cmd+K)"
-          >
-            Cmd
-          </button>
-
-          <div className="wnSelect">
-            <select value={platform} onChange={(e) => setPlatform(e.target.value)} aria-label="Platform">
-              {platforms.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <button
-            className={clsx('wnBtn', dirty ? 'wnBtn--primary' : 'wnBtn--ghost')}
-            onClick={() => void save('save', 'user')}
-            disabled={!activePath}
-            title="Save (Ctrl/Cmd+S)"
-          >
-            Save
-          </button>
-        </div>
-      </header>
-
-      <div className="wnBody">
-        <aside className="wnActivity" aria-label="Activity Bar">
-          <button
-            className={clsx('wnActBtn', sidebarOpen && 'wnActBtn--active')}
-            onClick={() => setSidebarOpen((v) => !v)}
-            title="Explorer"
-            aria-label="Explorer"
-          >
-            <IconExplorer />
-          </button>
-          <button className="wnActBtn" onClick={() => setSnapshotsOpen(true)} title="Timeline" aria-label="Timeline">
-            <IconClock />
-          </button>
-          <button
-            className={clsx('wnActBtn', previewOpen && 'wnActBtn--active')}
-            onClick={() => setPreviewOpen((v) => !v)}
-            title="Preview"
-            aria-label="Preview"
-          >
-            <IconPreview />
-          </button>
-          <div className="wnActSpacer" />
-          <button
-            className="wnActBtn"
-            onClick={() => {
-              setPaletteOpen(true)
-              editorRef.current?.focus()
-            }}
-            title="Command Palette (Ctrl/Cmd+K)"
-            aria-label="Command Palette"
-          >
-            <IconCmd />
-          </button>
-        </aside>
-
-        {sidebarOpen && (
-        <aside className="wnSidebar" style={{ width: sidebarWidth }}>
-          <div className="wnSidebarHeader">
-            <div className="wnSidebarTitle">Explorer</div>
-            <div className="wnSidebarActions" aria-label="Explorer Actions">
-              <button className="wnIconBtn" onClick={() => void refreshFiles()} title="Refresh">
-                <IconRefresh />
-              </button>
-              <button className="wnIconBtn" onClick={() => void onNewFile()} title="New File">
-                <IconNewFile />
-              </button>
+      <aside className="sidebar" aria-label="Sidebar">
+        {activity === 'library' && <LibraryPane files={files} activePath={activePath} onOpen={(p) => void openFile(p)} />}
+        {activity === 'map' && <StoryMap nodes={storyMapNodes} onRegenerate={() => void regenerateStoryMap()} loading={storyMapLoading} />}
+        {activity === 'search' && (
+          <>
+            <div className="sidebar-header">Search</div>
+            <div className="nav-item" aria-disabled="true">
+              (Coming soon)
             </div>
-          </div>
-          <FileTree files={files} activePath={activePath} onOpen={(p) => void openFile(p)} />
-          <div className="wnSidebarHint">
-            <kbd>Ctrl</kbd>+<kbd>K</kbd> edit selection · <kbd>Ctrl</kbd>+<kbd>S</kbd> save
-          </div>
-        </aside>
+          </>
         )}
+        {activity === 'settings' && (
+          <>
+            <div className="sidebar-header">Settings</div>
+            <button className="nav-item" onClick={() => void onNewFile()} type="button">
+              + New Draft
+            </button>
+            <div className="nav-item" aria-disabled="true">
+              Agent: {wsConnected ? 'On' : 'Off'}
+            </div>
+          </>
+        )}
+      </aside>
 
-        {sidebarOpen && (
-          <div
-            className="wnResizeHandle"
-            role="separator"
-            aria-orientation="vertical"
-            aria-label="Resize sidebar"
-            onPointerDown={(e) => beginResize('sidebar', e)}
-            onDoubleClick={() => {
-              const next = 270
-              setSidebarWidth(next)
-              localStorage.setItem('wn.sidebarWidth', String(next))
+      <main className="workspace">
+        <TabBar tabs={openTabs} activePath={activePath} onSelect={(p) => void openFile(p)} onClose={(p) => void closeTab(p)} />
+
+        <div className="workspace-header">
+          <div className="format-selector">
+            <span>{dict.fmtMode}</span>
+            <span style={{ fontWeight: 700, color: 'var(--accent)' }}>{dict.fmtCurr}</span>
+          </div>
+
+          <div className="view-switcher" role="tablist" aria-label="View switcher">
+            <button className={clsx('view-btn', viewMode === 'edit' && 'active')} onClick={() => setViewMode('edit')} type="button">
+              {dict.edit}
+            </button>
+            <button
+              className={clsx('view-btn', viewMode === 'preview' && 'active')}
+              onClick={() => setViewMode('preview')}
+              type="button"
+            >
+              {dict.preview}
+            </button>
+          </div>
+
+          <button className="btn-primary-studio publish-btn" onClick={() => setExportOpen(true)} type="button">
+            {dict.export}
+          </button>
+        </div>
+
+        <div className="canvas-container" id="canvas">
+          {viewMode === 'edit' ? (
+            <div className="paper-wrapper" id="editView">
+              <FormatToolbar
+                format={editorFormat}
+                setFormat={setEditorFormat}
+                onBold={() =>
+                  editorRef.current?.surroundSelection(editorFormat === 'markdown' ? '**' : '<b>', editorFormat === 'markdown' ? '**' : '</b>')
+                }
+                onItalic={() =>
+                  editorRef.current?.surroundSelection(editorFormat === 'markdown' ? '*' : '<i>', editorFormat === 'markdown' ? '*' : '</i>')
+                }
+                onUnderline={() => editorRef.current?.surroundSelection('<u>', '</u>')}
+              />
+              <EditorCanvas
+                key={activePath || 'empty'}
+                value={content}
+                onChange={(v) => {
+                  setContent(v)
+                  setDirty(true)
+                }}
+                onReady={(api) => {
+                  editorRef.current = api
+                }}
+              />
+            </div>
+          ) : (
+            <PreviewPane html={previewHtml} />
+          )}
+        </div>
+
+        <StatusBar left={statusLeft} right={statusRight} />
+      </main>
+
+      <aside className="ai-pane" aria-label="AI Companion">
+        <div className="ai-pane-header">
+          <span>AI Companion</span>
+          <span style={{ fontSize: 10, color: wsConnected ? 'var(--accent)' : 'var(--text-inc)' }}>{wsConnected ? 'ON' : 'OFF'}</span>
+        </div>
+
+        <div className="composer-section">
+          <Composer
+            value={composer}
+            onChange={setComposer}
+            onRun={() => startAgent(composer)}
+            disabled={!activePath || !composer.trim()}
+          />
+
+          <SkillsPanel
+            skills={skills}
+            onUseSkill={(skill) => {
+              setComposer(skill.promptTemplate)
+              startAgent(skill.promptTemplate)
+            }}
+            onNewSkill={() => {
+              const name = window.prompt('Skill name', '')
+              if (!name) return
+              const tag = window.prompt('Tag', '') ?? ''
+              const description = window.prompt('Description', '') ?? ''
+              const promptTemplate = window.prompt('Prompt template', '')
+              if (!promptTemplate) return
+              const id =
+                typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `skill-${Date.now()}-${Math.random()}`
+              const next: Skill = {
+                id,
+                name,
+                description,
+                tag,
+                promptTemplate,
+              }
+              const nextSkills = [next, ...skills]
+              setSkills(nextSkills)
+              void saveSkills(nextSkills)
             }}
           />
-        )}
 
-        <main className="wnMain">
-          <div className="wnEditorFrame">
-            <div className="wnTabsBar" role="tablist" aria-label="Open Editors">
-              <div className="wnTabs">
-                {openTabs.length === 0 && <div className="wnTabsEmpty">No file</div>}
-                {openTabs.map((p) => (
-                  <div key={p} className={clsx('wnTab', p === activePath && 'wnTab--active')} role="tab">
-                    <button
-                      className="wnTabBtn"
-                      onClick={() => void openFile(p)}
-                      title={p}
-                      aria-current={p === activePath ? 'page' : undefined}
-                    >
-                      <span className="wnTabName">{basename(p)}</span>
-                      {dirty && p === activePath && <span className="wnTabDirty" aria-label="Unsaved">●</span>}
-                    </button>
-                    <button className="wnTabClose" onClick={() => void closeTab(p)} aria-label="Close">
-                      <IconClose />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <div className="wnTabsRight">
-                <span className={clsx('wnConn', wsConnected ? 'wnConn--ok' : 'wnConn--off')}>
-                  {wsConnected ? 'Agent' : 'Agent Off'}
-                </span>
-                <span className={clsx('wnConn', dirty ? 'wnConn--warn' : 'wnConn--dim')}>{statusLabel}</span>
+          {agent.kind === 'streaming' && (
+            <div style={{ marginTop: 24, fontSize: 12 }}>
+              <div style={{ borderLeft: '2px solid var(--accent)', paddingLeft: 12, color: 'var(--text-muted)' }}>
+                {dict.aiStatus}
               </div>
             </div>
-            <EditorPane
-              key={activePath || 'empty'}
-              value={content}
-              onChange={(v) => {
-                setContent(v)
-                setDirty(true)
-              }}
-              onReady={(api) => {
-                editorRef.current = api
-              }}
-            />
-          </div>
-        </main>
-
-        {previewOpen && (
-          <div
-            className="wnResizeHandle"
-            role="separator"
-            aria-orientation="vertical"
-            aria-label="Resize preview"
-            onPointerDown={(e) => beginResize('preview', e)}
-            onDoubleClick={() => {
-              const next = 420
-              setPreviewWidth(next)
-              localStorage.setItem('wn.previewWidth', String(next))
-            }}
-          />
-        )}
-
-        {previewOpen && (
-          <aside className="wnPreview" style={{ width: previewWidth }}>
-            <PreviewPane
-              html={previewHtml}
-              warnings={previewWarnings}
-              filenameHint={activePath ? `${activePath.replace(/\.md$/i, '')}-${platform}.html` : `export-${platform}.html`}
-            />
-          </aside>
-        )}
-      </div>
-
-      <footer className="wnStatus">
-        <div className="wnStatusLeft">
-          <span className={clsx('wnStatusDot', wsConnected ? 'wnStatusDot--ok' : 'wnStatusDot--off')} aria-hidden="true" />
-          <span className="wnStatusText">
-            {wordCount.chars} chars · {wordCount.words} words · {dirty ? 'Unsaved' : 'Saved'}
-          </span>
+          )}
         </div>
-        <div className="wnStatusRight">
-          <span className="wnStatusMeta">API: {new URL(wsUrl('/ws/agent')).host}</span>
-        </div>
-      </footer>
-
-      <CommandPalette
-        open={paletteOpen}
-        value={paletteValue}
-        setValue={setPaletteValue}
-        onClose={() => setPaletteOpen(false)}
-        onSubmit={(instruction) => {
-          setPaletteOpen(false)
-          setPaletteValue('')
-          startAgentEdit(instruction)
-        }}
-      />
+      </aside>
 
       <DiffModal
         open={diffOpen}
@@ -562,115 +460,134 @@ function App() {
         onApply={() => void applyAgentEdit()}
       />
 
-      <SnapshotDrawer
-        open={snapshotsOpen}
-        path={activePath}
-        snapshots={snapshots}
-        onClose={() => setSnapshotsOpen(false)}
-        onRevert={(id) => void onRevert(id)}
+      <SkillPalette
+        open={paletteOpen}
+        value={paletteValue}
+        setValue={setPaletteValue}
+        skills={skills}
+        onClose={() => setPaletteOpen(false)}
+        onRunInstruction={(instruction) => {
+          setPaletteOpen(false)
+          setPaletteValue('')
+          setComposer(instruction)
+          startAgent(instruction)
+        }}
+        onRunSkill={(skill) => {
+          setPaletteOpen(false)
+          setPaletteValue('')
+          setComposer(skill.promptTemplate)
+          startAgent(skill.promptTemplate)
+        }}
+      />
+
+      <ExportModal
+        open={exportOpen}
+        title={guessTitle(content) ?? ''}
+        activePath={activePath}
+        content={content}
+        platforms={platforms}
+        platform={platform}
+        setPlatform={setPlatform}
+        onClose={() => setExportOpen(false)}
       />
     </div>
   )
 }
 
+function App() {
+  return (
+    <I18nProvider>
+      <StudioApp />
+    </I18nProvider>
+  )
+}
+
 function guessTitle(markdown: string): string | null {
-  const m = markdown.match(/^#\s+(.+)\s*$/m)
+  const m = markdown.match(/^#\\s+(.+)\\s*$/m)
   return m?.[1]?.trim() ?? null
 }
 
-function basename(p: string) {
-  return p.split('/').pop() || p
-}
+function computeCounts(content: string, lang: 'en' | 'zh') {
+  const trimmed = content.trim()
+  if (!trimmed) return { countLabel: lang === 'zh' ? '0 字' : '0 words', readLabel: lang === 'zh' ? '0 分钟阅读' : '0m read' }
 
-function loadWidth(key: string, fallback: number, min: number, max: number) {
-  try {
-    const v = Number(localStorage.getItem(key))
-    if (!Number.isFinite(v)) return fallback
-    return clamp(v, min, max)
-  } catch {
-    return fallback
+  const words = trimmed.split(/\\s+/).filter(Boolean).length
+  const chars = trimmed.replace(/\\s+/g, '').length
+
+  if (lang === 'zh') {
+    const minutes = Math.max(1, Math.ceil(chars / 400))
+    return { countLabel: `${chars} 字`, readLabel: `${minutes} 分钟阅读` }
   }
+
+  const minutes = Math.max(1, Math.ceil(words / 200))
+  return { countLabel: `${words} words`, readLabel: `${minutes}m read` }
 }
 
-function clamp(v: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, v))
+function seedStoryMapNodes(lang: 'en' | 'zh'): StoryMapNode[] {
+  if (lang === 'en') {
+    return [
+      { title: 'Core Problem', detail: 'Traditional editors are bottlenecks.', depth: 1 },
+      { title: 'Solution', detail: 'Integrated AI environment.', depth: 1 },
+      { title: 'Value', detail: 'Precision and consistency.', depth: 1 },
+    ]
+  }
+  return [
+    { title: '核心问题', detail: '传统编辑器无法满足多平台分发需求。', depth: 1 },
+    { title: '解决方案', detail: '集成 AI 的高精密创作环境。', depth: 1 },
+    { title: '价值主张', detail: '精准度、语气一致性与快速适配。', depth: 1 },
+  ]
 }
 
-function IconExplorer() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M4 6.2C4 5.54 4.54 5 5.2 5h4.2l1.4 1.6H18.8c.66 0 1.2.54 1.2 1.2v9.8c0 .66-.54 1.2-1.2 1.2H5.2c-.66 0-1.2-.54-1.2-1.2V6.2Zm2 .8v9.6h12V8.4h-7.8l-1.4-1.6H6Z"
-      />
-    </svg>
-  )
-}
+function seedSkills(lang: 'en' | 'zh'): Skill[] {
+  if (lang === 'en') {
+    return [
+      {
+        id: 'seed-wechat-layout',
+        name: 'WeChat Layout',
+        description: 'Auto-format titles and spacing for WeChat UI.',
+        tag: 'Style',
+        promptTemplate: 'Optimize the selected text for WeChat formatting and readability.',
+      },
+      {
+        id: 'seed-title-master',
+        name: 'Title Master',
+        description: 'Generate 5 high-CTR headlines based on content.',
+        tag: 'Creative',
+        promptTemplate: 'Generate 5 high-CTR headline options for the selected text.',
+      },
+      {
+        id: 'seed-cross-check',
+        name: 'Cross-Check',
+        description: 'Verify quotes and facts in selection.',
+        tag: 'Quality',
+        promptTemplate: 'Cross-check the claims in the selection and fix any factual issues.',
+      },
+    ]
+  }
 
-function IconClock() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M12 2a10 10 0 1 0 0 20a10 10 0 0 0 0-20Zm0 2a8 8 0 1 1 0 16a8 8 0 0 1 0-16Zm-1 3h2v6l4 2l-1 1.7l-5-2.7V7Z"
-      />
-    </svg>
-  )
-}
-
-function IconPreview() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M3 6.5C3 5.12 4.12 4 5.5 4h13C19.88 4 21 5.12 21 6.5v11c0 1.38-1.12 2.5-2.5 2.5h-13C4.12 20 3 18.88 3 17.5v-11Zm2 .5v10.5c0 .28.22.5.5.5h13c.28 0 .5-.22.5-.5V7c0-.28-.22-.5-.5-.5h-13c-.28 0-.5.22-.5.5Zm3.5 1.5h7v2h-7v-2Zm0 4h10v2h-10v-2Z"
-      />
-    </svg>
-  )
-}
-
-function IconCmd() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M7 4a3 3 0 0 0 0 6h1v4H7a3 3 0 1 0 3 3v-1h4v1a3 3 0 1 0 3-3h-1v-4h1a3 3 0 1 0-3-3v1h-4V7a3 3 0 0 0-3-3Zm0 2a1 1 0 0 1 1 1v1H7a1 1 0 0 1 0-2Zm9 0a1 1 0 0 1 1 1v1h-1V7a1 1 0 0 1 1-1ZM10 10h4v4h-4v-4Zm-3 6h1v1a1 1 0 1 1-1-1Zm10 0a1 1 0 1 1-1 1v-1h1Z"
-      />
-    </svg>
-  )
-}
-
-function IconClose() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M18.3 5.7L12 12l6.3 6.3l-1.4 1.4L10.6 13.4L4.3 19.7L2.9 18.3L9.2 12L2.9 5.7L4.3 4.3l6.3 6.3l6.3-6.3l1.4 1.4Z"
-      />
-    </svg>
-  )
-}
-
-function IconRefresh() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.75 6h-2.1A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35Z"
-      />
-    </svg>
-  )
-}
-
-function IconNewFile() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm1 7V3.5L19.5 9H15Zm-4 2h2v3h3v2h-3v3h-2v-3H8v-2h3v-3Z"
-      />
-    </svg>
-  )
+  return [
+    {
+      id: 'seed-wechat-layout',
+      name: '微信公众号排版',
+      description: '自动适配公众号大号字、行间距与引用样式。',
+      tag: '样式',
+      promptTemplate: '请把选中文本改写成更适合微信公众号阅读的排版与语气：更清晰的段落、适度的小标题、保持内容不跑题。',
+    },
+    {
+      id: 'seed-title-master',
+      name: '爆款标题生成',
+      description: '基于内容生成 5 个高点击率标题建议。',
+      tag: '创意',
+      promptTemplate: '基于选中文本生成 5 个高点击率标题，风格分别为：理性、情绪、反差、数字化、对话式。',
+    },
+    {
+      id: 'seed-cross-check',
+      name: '实时事实核查',
+      description: '验证选中段落中的数据、引用与特定事实。',
+      tag: '质量',
+      promptTemplate: '请检查选中文本中的事实与数字表述，发现可疑处就改写为更稳妥、可验证的表达。',
+    },
+  ]
 }
 
 export default App
