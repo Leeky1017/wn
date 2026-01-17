@@ -1,13 +1,13 @@
 # ISSUE-1
 - Issue: #1
 - Branch: task/1-repo-bootstrap
-- PR: (pending)
+- PR: https://github.com/Leeky1017/wn/pull/2
 
 ## Goal
 - Bootstrap WriteNow as an SS-style spec-first repo (OpenSpec + Rulebook + GitHub) and import the MVP codebase.
 
 ## Status
-- CURRENT: preparing bootstrap PR for repo standardization.
+- CURRENT: waiting for PR checks and merge.
 
 ## Next Actions
 - [ ] Add Rulebook task skeleton for Issue #1
@@ -37,3 +37,13 @@
 - Command: `gh issue create -R Leeky1017/wn ...`
 - Key output: `https://github.com/Leeky1017/wn/issues/1`
 - Evidence: Issue #1
+
+### 2026-01-17 local validation
+- Command: `openspec validate --specs --strict --no-interactive`
+- Key output: `Totals: 3 passed, 0 failed`
+- Evidence: `openspec/specs/`
+
+### 2026-01-17 open PR
+- Command: `gh pr create -R Leeky1017/wn --base main --head task/1-repo-bootstrap ...`
+- Key output: `https://github.com/Leeky1017/wn/pull/2`
+- Evidence: PR #2
