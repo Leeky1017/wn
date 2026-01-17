@@ -28,3 +28,7 @@
 - Key output: `/bin/bash: line 1: python: command not found`
 - Command: `python3 -m compileall backend/app`
 - Key output: `Compiling 'backend/app/main.py'...`
+
+### 2026-01-17 16:23 pr preflight
+- Command: `scripts/agent_pr_preflight.sh`
+- Key output: `OK: no overlapping files with open PRs`
