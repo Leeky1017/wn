@@ -1,0 +1,29 @@
+.env
+.env.*
+
+# Python
+__pycache__/
+*.pyc
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+backend/.venv/
+
+# Node
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Local data / artifacts
+data/
+*.sqlite3
+*.log
+
+# Git worktrees
+.worktrees/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
