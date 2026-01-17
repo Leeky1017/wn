@@ -1,7 +1,7 @@
 # ISSUE-7
 - Issue: #7
 - Branch: task/7-desktop-hidpi
-- PR: <fill-after-created>
+- PR: https://github.com/Leeky1017/wn/pull/8
 
 ## Plan
 - Fix Electron HiDPI/Retina rendering defaults
@@ -32,3 +32,7 @@
 ### 2026-01-17 16:23 pr preflight
 - Command: `scripts/agent_pr_preflight.sh`
 - Key output: `OK: no overlapping files with open PRs`
+
+### 2026-01-17 16:25 pr create
+- Command: `gh pr create --base main --head task/7-desktop-hidpi --title \"fix: sharpen HiDPI rendering (#7)\" --body-file /tmp/issue-7-pr-body.md`
+- Key output: `https://github.com/Leeky1017/wn/pull/8`
