@@ -1,0 +1,26 @@
+:root {
+  --bg-app: #f9fafb;
+  --bg-sidebar: #f3f4f6;
+  --bg-paper: #ffffff;
+  --bg-tab-inactive: #eeeff2;
+
+  --text-main: #111827;
+  --text-muted: #6b7280;
+  --text-inc: #9ca3af;
+
+  --border: #e2e8f0;
+  --accent: #2563eb;
+  --accent-soft: rgba(37, 99, 235, 0.08);
+
+  --font-ui: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
+  --font-serif: 'Noto Serif SC', 'Charter', 'Georgia', serif;
+
+  --radius: 8px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+[lang='zh'] {
+  --font-serif: 'Noto Serif SC', serif;
+}
+
