@@ -3,6 +3,17 @@ const path = require('path')
 const { spawn } = require('child_process')
 const fs = require('fs')
 
+// Enable HiDPI / Retina rendering
+app.commandLine.appendSwitch('high-dpi-support', '1')
+app.commandLine.appendSwitch('force-device-scale-factor', '1')
+// Ensure hardware acceleration
+app.commandLine.appendSwitch('enable-accelerated-2d-canvas', 'true')
+app.commandLine.appendSwitch('enable-gpu-rasterization', 'true')
+// Disable GPU sandbox if needed on Linux
+if (process.platform === 'linux') {
+  app.commandLine.appendSwitch('disable-gpu-sandbox')
+}
+
 const isDev = !app.isPackaged
 
 let backendProc = null
@@ -185,8 +196,15 @@ async function createMainWindow() {
       nodeIntegration: false,
       sandbox: true,
       preload: path.join(__dirname, 'preload.cjs'),
+      // HiDPI / Rendering quality
+      zoomFactor: 1.0,
+      enablePreferredSizeMode: true,
     },
   })
+
+  // Force high-quality rendering
+  win.webContents.setZoomFactor(1.0)
+  await win.webContents.setVisualZoomLevelLimits(1, 1)
 
   win.once('ready-to-show', () => win.show())
   mainWindow = win
