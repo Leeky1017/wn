@@ -1,0 +1,398 @@
+.wnShell{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  background: var(--bg);
+}
+
+.wnTopbar{
+  height: 36px;
+  padding: 0 12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom: 1px solid var(--border-2);
+  background: var(--panel);
+}
+
+.wnBrand{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  min-width: 180px;
+}
+.wnBrandText{display:flex; flex-direction:column; line-height:1.05}
+.wnBrandName{
+  font-size: 13px;
+  letter-spacing:.02em;
+  font-weight: 600;
+  color: var(--text);
+}
+.wnBrandSub{
+  display:none;
+}
+
+.wnTopActions{display:flex; align-items:center; gap:8px}
+
+.wnBody{
+  flex:1;
+  min-height:0;
+  display:flex;
+}
+
+.wnActivity{
+  width: 48px;
+  border-right: 1px solid var(--border-2);
+  background: var(--panel-2);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding: 4px 0;
+  gap: 2px;
+}
+.wnActBtn{
+  appearance:none;
+  width: 48px;
+  height: 44px;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  color: rgba(212,212,212,.74);
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  position:relative;
+  transition: background .10s ease, color .10s ease;
+}
+.wnActBtn:hover{
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.92);
+}
+.wnActBtn--active{
+  color: rgba(255,255,255,.95);
+}
+.wnActBtn--active::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+.wnActSpacer{flex:1}
+
+.wnSidebar{
+  min-width: 220px;
+  max-width: 520px;
+  min-height:0;
+  flex: 0 0 auto;
+  background: var(--panel);
+  display:flex;
+  flex-direction:column;
+}
+.wnSidebarHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  height: 32px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--border-2);
+}
+.wnSidebarActions{
+  display:flex;
+  align-items:center;
+  gap: 4px;
+}
+.wnIconBtn{
+  appearance:none;
+  border: 0;
+  background: transparent;
+  color: rgba(212,212,212,.72);
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  transition: background .10s ease, color .10s ease;
+}
+.wnIconBtn:hover{
+  background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.92);
+}
+.wnIconBtn:active{
+  background: rgba(0,0,0,.22);
+}
+.wnSidebarTitle{
+  font-size: 11px;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+  color: rgba(212,212,212,.72);
+}
+.wnSidebarHint{
+  margin-top: auto;
+  padding: 8px 10px;
+  border-top: 1px solid var(--border-2);
+  color: rgba(212,212,212,.70);
+  font-size: 12px;
+}
+.wnSidebarHint kbd{
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(0,0,0,.20);
+  margin: 0 2px;
+}
+
+.wnMain{
+  flex:1;
+  min-width:0;
+  min-height:0;
+  background: var(--bg);
+}
+
+.wnResizeHandle{
+  flex: 0 0 4px;
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  position:relative;
+}
+.wnResizeHandle::after{
+  content:"";
+  position:absolute;
+  top: 0;
+  bottom: 0;
+  left: 1px;
+  width: 1px;
+  background: var(--border-2);
+}
+.wnResizeHandle:hover::after{
+  background: rgba(0,122,204,.55);
+}
+.wnResizeHandle:active::after{
+  background: rgba(0,122,204,.85);
+}
+
+.wnEditorFrame{
+  height:100%;
+  background: var(--bg);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+.wnTabsBar{
+  height: 35px;
+  display:flex;
+  align-items:stretch;
+  justify-content:space-between;
+  border-bottom: 1px solid var(--border-2);
+  background: var(--panel);
+}
+.wnTabs{
+  display:flex;
+  min-width:0;
+  overflow:auto;
+  scrollbar-width: thin;
+}
+.wnTabsEmpty{
+  display:flex;
+  align-items:center;
+  padding: 0 12px;
+  color: rgba(212,212,212,.62);
+  font-size: 12px;
+}
+.wnTab{
+  display:flex;
+  align-items:center;
+  border-right: 1px solid var(--border-2);
+  background: var(--panel);
+}
+.wnTab--active{
+  background: var(--bg);
+}
+.wnTabBtn{
+  appearance:none;
+  border:0;
+  background: transparent;
+  color: rgba(212,212,212,.78);
+  padding: 0 10px 0 10px;
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  cursor:pointer;
+  min-width: 140px;
+  height: 100%;
+}
+.wnTab--active .wnTabBtn{
+  color: rgba(255,255,255,.95);
+}
+.wnTabName{
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width: 18ch;
+}
+.wnTabDirty{
+  color: var(--warn);
+  font-size: 11px;
+  transform: translateY(-1px);
+}
+.wnTabClose{
+  appearance:none;
+  border:0;
+  background: transparent;
+  color: rgba(212,212,212,.62);
+  width: 28px;
+  height: 100%;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  transition: background .10s ease, color .10s ease;
+}
+.wnTabClose:hover{
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.92);
+}
+
+.wnTabsRight{
+  display:flex;
+  align-items:center;
+  gap: 14px;
+  padding: 0 10px;
+}
+.wnConn{
+  display:flex;
+  align-items:center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(212,212,212,.72);
+}
+.wnConn::before{
+  content:"";
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(212,212,212,.35);
+}
+.wnConn--ok{color: rgba(255,255,255,.88)}
+.wnConn--ok::before{background: var(--ok)}
+.wnConn--off{color: rgba(212,212,212,.70)}
+.wnConn--off::before{background: rgba(212,212,212,.30)}
+.wnConn--warn{color: rgba(255,255,255,.88)}
+.wnConn--warn::before{background: var(--warn)}
+.wnConn--dim{color: rgba(212,212,212,.70)}
+.wnConn--dim::before{background: rgba(212,212,212,.30)}
+
+.wnPaper{
+  flex:1;
+  min-height:0;
+  background: var(--editor-bg);
+  color: var(--editor-text);
+  position:relative;
+}
+
+.wnPreview{
+  min-width: 320px;
+  max-width: 900px;
+  min-height:0;
+  flex: 0 0 auto;
+  background: var(--panel);
+}
+
+.wnStatus{
+  height: 22px;
+  padding: 0 10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-top: 1px solid rgba(0,0,0,.25);
+  background: var(--accent);
+}
+.wnStatusLeft,.wnStatusRight{display:flex; align-items:center; gap:10px}
+.wnStatusDot{
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.62);
+}
+.wnStatusDot--ok{
+  background: rgba(255,255,255,.92);
+  box-shadow: 0 0 0 4px rgba(255,255,255,.16);
+}
+.wnStatusDot--off{
+  background: rgba(255,255,255,.46);
+  box-shadow: 0 0 0 4px rgba(255,255,255,.10);
+}
+.wnStatusText{
+  color: rgba(255,255,255,.92);
+  font-size: 12px;
+}
+.wnStatusMeta{
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(255,255,255,.84);
+}
+
+.wnBtn{
+  appearance:none;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.18);
+  color: rgba(255,255,255,.90);
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor:pointer;
+  transition: background .10s ease, border-color .10s ease, color .10s ease;
+}
+.wnBtn:hover{
+  background: rgba(0,0,0,.26);
+  border-color: rgba(255,255,255,.20);
+}
+.wnBtn:active{background: rgba(0,0,0,.34)}
+.wnBtn:disabled{cursor:not-allowed; opacity:.55}
+
+.wnBtn--ghost{
+  background: transparent;
+  border-color: rgba(255,255,255,.12);
+}
+.wnBtn--primary{
+  border-color: rgba(0,122,204,.70);
+  background: rgba(0,122,204,.22);
+}
+.wnBtn--tiny{
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.wnSelect{
+  position:relative;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.18);
+  overflow:hidden;
+}
+.wnSelect select{
+  appearance:none;
+  border:0;
+  background: transparent;
+  color: rgba(255,255,255,.86);
+  padding: 5px 28px 5px 10px;
+  cursor:pointer;
+}
+.wnSelect::after{
+  content:"▾";
+  position:absolute;
+  right: 9px;
+  top: 50%;
+  transform: translateY(-52%);
+  color: rgba(255,255,255,.62);
+  pointer-events:none;
+}

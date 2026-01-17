@@ -1,0 +1,65 @@
+:root{
+  --font-ui: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Ubuntu Sans", "Noto Sans SC", "Noto Sans",
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+  --font-mono: ui-monospace, "IBM Plex Mono", "Ubuntu Sans Mono", "DejaVu Sans Mono", Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
+
+  /* VSCode/Cursor-ish dark tokens */
+  --bg: #1e1e1e;
+  --panel: #252526;
+  --panel-2: #333333;
+  --surface: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.14);
+  --border-2: rgba(255, 255, 255, 0.08);
+
+  --text: #d4d4d4;
+  --muted: rgba(212, 212, 212, 0.72);
+
+  --accent: #007acc;
+  --ok: #89d185;
+  --warn: #cca700;
+  --danger: #f14c4c;
+
+  --editor-bg: #1e1e1e;
+  --editor-text: #d4d4d4;
+  --editor-selection: rgba(0, 122, 204, 0.35);
+
+  --shadow: none;
+  --radius: 4px;
+}
+
+*{box-sizing:border-box}
+html, body, #root{height:100%}
+body{
+  margin:0;
+  color:var(--text);
+  background: var(--bg);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow:hidden;
+}
+
+#root{
+  min-height:100%;
+}
+
+a{color:inherit; text-decoration:none}
+button, input, select{font: inherit}
+
+::selection{background: var(--editor-selection)}
+
+/* Scrollbars (Chromium/Electron) */
+*::-webkit-scrollbar{width: 10px; height: 10px}
+*::-webkit-scrollbar-thumb{
+  background: rgba(121,121,121,.55);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover{background: rgba(121,121,121,.8); background-clip: content-box}
+*::-webkit-scrollbar-track{background: transparent}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important;}
+}
