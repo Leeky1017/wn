@@ -1,0 +1,57 @@
+name: merge-serial
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: merge-serial
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: merge-serial
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Install OpenSpec CLI
+        run: npm install -g @fission-ai/openspec@0.17.2
+
+      - name: OpenSpec validate (strict)
+        run: openspec validate --specs --strict --no-interactive
+
+      - name: Install frontend deps
+        run: pnpm -C frontend install --frozen-lockfile
+
+      - name: Frontend lint
+        run: pnpm -C frontend lint
+
+      - name: Frontend build
+        run: pnpm -C frontend build
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install backend deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: Backend compile
+        run: python -m compileall backend/app
