@@ -24,3 +24,14 @@
   --font-serif: 'Noto Serif SC', serif;
 }
 
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+html {
+  font-size: 16px;
+  /* Prevent sub-pixel rendering issues */
+  image-rendering: -webkit-optimize-contrast;
+}
