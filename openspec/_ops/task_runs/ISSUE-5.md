@@ -1,18 +1,18 @@
 # ISSUE-5
 - Issue: https://github.com/Leeky1017/wn/issues/5
 - Branch: task/5-desktop-ui-refactor
-- PR: <fill-after-created>
+- PR: https://github.com/Leeky1017/wn/pull/6
 
 ## Goal
 - Refactor `frontend/src` to match `demo.html` (writer-first, premium light theme) while keeping Electron + local Python backend integration working.
 
 ## Status
-- CURRENT: UI refactor + Story Map/Skills/IPC implemented; ready to commit and open PR.
+- CURRENT: PR opened; waiting for required checks and auto-merge.
 
 ## Next Actions
-- [ ] Commit changes (all commits include `(#5)`)
-- [ ] Open PR with `Closes #5` and enable auto-merge
 - [ ] Wait for checks: `ci` / `openspec-log-guard` / `merge-serial`
+- [ ] Enable auto-merge: `gh pr merge --auto --squash`
+- [ ] Verify merged; sync + cleanup worktree
 
 ## Decisions Made
 - 2026-01-17: Use `demo.html` as the source of truth for layout + tokens; keep existing backend APIs and extend only when required for Story Map.
@@ -41,3 +41,8 @@
 - Command: `openspec validate --specs --strict --no-interactive`
 - Key output: `Totals: 4 passed, 0 failed (4 items)`
 - Evidence: `openspec/specs/writenow-desktop-ui/spec.md`
+
+### 2026-01-17 open PR
+- Command: `gh pr create --base main --head task/5-desktop-ui-refactor ...`
+- Key output: `https://github.com/Leeky1017/wn/pull/6`
+- Evidence: PR #6
