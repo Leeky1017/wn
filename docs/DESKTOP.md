@@ -43,3 +43,29 @@ pnpm desktop
 - Electron 启动时会以子进程方式运行 `uvicorn app.main:app`（默认 `127.0.0.1:8000`）
 - 工作区与数据库默认写入 `Electron userData` 目录下的 `data/`
 - 渲染进程通过 `window.writenow.apiBase/wsBase` 与后端通信（见 `frontend/src/app/api.ts`）
+
+## Windows 打包/分发（EXE）
+
+推荐在 Windows PowerShell 运行一键脚本：
+
+```powershell
+.\scripts\build-windows.ps1
+```
+
+输出目录：`frontend/release/`
+
+- `WriteNow Setup <version>.exe`：NSIS 安装包（推荐分发；安装后从开始菜单启动）
+- `WriteNow <version>.exe`：Portable 单文件（可直接拷到桌面运行；推荐给“只想双击 exe”的场景）
+- `win-unpacked/`：免安装目录（可直接运行，但必须保留整个目录结构）
+
+常见“白屏”原因（最常见）：
+
+- 只把 `win-unpacked/WriteNow.exe` 单独拷到桌面，旁边没有 `resources/`（缺少 `resources/app.asar` / 前端静态资源等）
+
+快速自检：
+
+- 确认 `WriteNow.exe` 同级存在 `resources/` 目录
+- 确认 `resources/app.asar` 存在
+- 确认后端存在其一：
+  - `resources/backend-dist/writenow-backend.exe`
+  - `resources/backend-dist/writenow-backend/writenow-backend.exe`

@@ -395,8 +395,8 @@ function StudioApp() {
           )}
         </div>
 
-        <StatusBar left={statusLeft} right={statusRight} />
-      </main>
+      <StatusBar left={statusLeft} right={statusRight} />
+    </main>
 
       <aside className="ai-pane" aria-label="AI Companion">
         <div className="ai-pane-header">

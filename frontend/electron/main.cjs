@@ -2,6 +2,7 @@ const { app, BrowserWindow, dialog, ipcMain, Menu, shell } = require('electron')
 const path = require('path')
 const { spawn } = require('child_process')
 const fs = require('fs')
+const util = require('util')
 
 // Enable HiDPI / Retina rendering
 app.commandLine.appendSwitch('high-dpi-support', '1')
@@ -18,6 +19,41 @@ const isDev = !app.isPackaged
 
 let backendProc = null
 let mainWindow = null
+let backendErrorShown = false
+let logStream = null
+let logPath = null
+
+function initLogging() {
+  try {
+    const logsDir = path.join(app.getPath('userData'), 'logs')
+    fs.mkdirSync(logsDir, { recursive: true })
+    logPath = path.join(logsDir, 'main.log')
+    logStream = fs.createWriteStream(logPath, { flags: 'a' })
+  } catch {
+    // ignore
+  }
+}
+
+function log(...args) {
+  const msg = util.format(...args)
+  try {
+    console.log(msg)
+  } catch {
+    // ignore
+  }
+  try {
+    if (logStream) logStream.write(`[${new Date().toISOString()}] ${msg}\n`)
+  } catch {
+    // ignore
+  }
+}
+
+process.on('uncaughtException', (err) => {
+  log('[main] uncaughtException:', err && err.stack ? err.stack : String(err))
+})
+process.on('unhandledRejection', (reason) => {
+  log('[main] unhandledRejection:', reason && reason.stack ? reason.stack : String(reason))
+})
 
 function resolveSkillsPath() {
   return path.join(app.getPath('userData'), 'skills.json')
@@ -103,8 +139,37 @@ function setupIpc() {
 }
 
 function resolveBackendDir() {
-  // frontend/electron -> repo/backend (dev). In packaged builds, this should be adjusted.
+  if (app.isPackaged) {
+    // In packaged builds, backend is in resources/backend
+    return path.join(process.resourcesPath, 'backend')
+  }
+  // frontend/electron -> repo/backend (dev)
   return path.resolve(__dirname, '..', '..', 'backend')
+}
+
+function resolveBackendExe() {
+  if (app.isPackaged) {
+    const exeName = process.platform === 'win32' ? 'writenow-backend.exe' : 'writenow-backend'
+
+    // electron-builder extraResources may either flatten the executable into
+    // resources/backend-dist/<exe>, or keep the PyInstaller --onedir folder:
+    // resources/backend-dist/writenow-backend/<exe>
+    const candidates = [
+      path.join(process.resourcesPath, 'backend-dist', exeName),
+      path.join(process.resourcesPath, 'backend-dist', 'writenow-backend', exeName),
+    ]
+
+    for (const p of candidates) {
+      try {
+        if (fs.existsSync(p)) return { type: 'exe', path: p }
+      } catch {
+        // ignore
+      }
+    }
+    return { type: 'missing', path: null }
+  }
+  // Fallback to Python
+  return { type: 'python', path: null }
 }
 
 function resolvePython(backendDir) {
@@ -126,9 +191,6 @@ function resolvePython(backendDir) {
 }
 
 function startBackend() {
-  const backendDir = resolveBackendDir()
-  const python = resolvePython(backendDir)
-
   const port = Number(process.env.WN_BACKEND_PORT || 8000)
   const host = process.env.WN_BACKEND_HOST || '127.0.0.1'
   const reload = process.env.WN_BACKEND_RELOAD === '1'
@@ -138,20 +200,45 @@ function startBackend() {
     process.env.WN_ALLOWED_ORIGINS ||
     'http://localhost:5173,http://127.0.0.1:5173,null'
 
-  const args = [
-    '-m',
-    'uvicorn',
-    'app.main:app',
-    '--host',
-    host,
-    '--port',
-    String(port),
-  ]
-  if (reload) args.push('--reload')
+  const backendExe = resolveBackendExe()
+  
+  let cmd, args, cwd
 
-  console.log('[backend] starting:', python, args.join(' '))
-  backendProc = spawn(python, args, {
-    cwd: backendDir,
+  if (backendExe.type === 'exe') {
+    // Use packaged backend executable
+    cmd = backendExe.path
+    args = ['--host', host, '--port', String(port)]
+    cwd = path.dirname(backendExe.path)
+    log('[backend] starting exe:', cmd, args.join(' '))
+  } else if (backendExe.type === 'missing') {
+    const msg =
+      'Packaged backend executable not found.\n' +
+      `Expected one of:\n- ${path.join(process.resourcesPath, 'backend-dist', process.platform === 'win32' ? 'writenow-backend.exe' : 'writenow-backend')}\n` +
+      `- ${path.join(process.resourcesPath, 'backend-dist', 'writenow-backend', process.platform === 'win32' ? 'writenow-backend.exe' : 'writenow-backend')}\n\n` +
+      'Please rebuild on Windows using scripts/build-windows.ps1 so backend-dist is bundled.'
+    log('[backend] ' + msg)
+    if (!backendErrorShown) {
+      backendErrorShown = true
+      try {
+        dialog.showErrorBox('WriteNow Backend 缺失', msg)
+      } catch {
+        // ignore
+      }
+    }
+    return
+  } else {
+    // Use Python
+    const backendDir = resolveBackendDir()
+    const python = resolvePython(backendDir)
+    cmd = python
+    args = ['-m', 'uvicorn', 'app.main:app', '--host', host, '--port', String(port)]
+    if (reload) args.push('--reload')
+    cwd = backendDir
+    log('[backend] starting python:', cmd, args.join(' '))
+  }
+
+  backendProc = spawn(cmd, args, {
+    cwd: cwd,
     env: {
       ...process.env,
       WN_DATA_DIR: dataDir,
@@ -160,10 +247,24 @@ function startBackend() {
     stdio: 'pipe',
   })
 
+  backendProc.on('error', (err) => {
+    backendProc = null
+    const msg = err && err.message ? err.message : String(err)
+    log('[backend] spawn error:', msg)
+    if (app.isPackaged && !backendErrorShown) {
+      backendErrorShown = true
+      try {
+        dialog.showErrorBox('WriteNow Backend 启动失败', msg)
+      } catch {
+        // ignore
+      }
+    }
+  })
+
   backendProc.stdout.on('data', (d) => process.stdout.write(String(d)))
   backendProc.stderr.on('data', (d) => process.stderr.write(String(d)))
   backendProc.on('exit', (code) => {
-    console.log('[backend] exited:', code)
+    log('[backend] exited:', code)
     backendProc = null
   })
 
@@ -188,7 +289,7 @@ async function createMainWindow() {
     minHeight: 700,
     backgroundColor: '#f9fafb',
     title: 'WriteNow',
-    show: false,
+    show: true,
     autoHideMenuBar: true,
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     webPreferences: {
@@ -204,10 +305,41 @@ async function createMainWindow() {
 
   // Force high-quality rendering
   win.webContents.setZoomFactor(1.0)
-  await win.webContents.setVisualZoomLevelLimits(1, 1)
+  // Best-effort: on some Windows builds this promise may hang before first navigation.
+  // Do not block app startup on it.
+  void win.webContents
+    .setVisualZoomLevelLimits(1, 1)
+    .catch((e) => log('[main] setVisualZoomLevelLimits failed:', e && e.message ? e.message : String(e)))
 
   win.once('ready-to-show', () => win.show())
   mainWindow = win
+
+  win.webContents.on('console-message', (_evt, level, message, line, sourceId) => {
+    log('[renderer][console]', { level, message, sourceId, line })
+  })
+  win.webContents.on('render-process-gone', (_evt, details) => {
+    log('[renderer] render-process-gone:', details)
+    try {
+      dialog.showErrorBox(
+        'WriteNow 渲染进程崩溃',
+        `reason=${details?.reason ?? 'unknown'} exitCode=${details?.exitCode ?? 'unknown'}\nlog=${logPath ?? '(no log file)'}`,
+      )
+    } catch {
+      // ignore
+    }
+  })
+  win.webContents.on('did-fail-load', (_evt, errorCode, errorDescription, validatedURL, isMainFrame) => {
+    log('[renderer] did-fail-load:', { errorCode, errorDescription, validatedURL, isMainFrame })
+    if (!isMainFrame) return
+    try {
+      dialog.showErrorBox(
+        'WriteNow 页面加载失败',
+        `${errorCode} ${errorDescription}\nurl=${validatedURL}\nlog=${logPath ?? '(no log file)'}`,
+      )
+    } catch {
+      // ignore
+    }
+  })
 
   const startUrl =
     process.env.ELECTRON_START_URL ||
@@ -215,11 +347,22 @@ async function createMainWindow() {
 
   if (startUrl) {
     await win.loadURL(startUrl)
+    if (process.env.WN_OPEN_DEVTOOLS === '1') win.webContents.openDevTools({ mode: 'detach' })
     return
   }
 
-  const indexPath = path.join(__dirname, '..', 'dist', 'index.html')
+  // In packaged app, dist is in the same asar as electron folder
+  const indexPath = app.isPackaged
+    ? path.join(__dirname, '..', 'dist', 'index.html')
+    : path.join(__dirname, '..', 'dist', 'index.html')
+  
+  log('[main] loading index from:', indexPath)
+  log('[main] isPackaged:', app.isPackaged)
+  log('[main] __dirname:', __dirname)
+  if (logPath) log('[main] log:', logPath)
+  
   await win.loadFile(indexPath)
+  if (process.env.WN_OPEN_DEVTOOLS === '1') win.webContents.openDevTools({ mode: 'detach' })
 }
 
 function sendAction(action) {
@@ -295,7 +438,9 @@ app.on('before-quit', () => stopBackend())
 
 app.whenReady().then(async () => {
   try {
+    initLogging()
     setupIpc()
+    log('[main] starting, isPackaged=%s, platform=%s', app.isPackaged, process.platform)
     startBackend()
     await createMainWindow()
     createAppMenu()

@@ -14,6 +14,13 @@ node_modules/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+frontend/release/
+frontend/backend-dist/
+frontend/*.tgz
+
+# PyInstaller
+backend/dist/
+backend/build/
 
 # Local data / artifacts
 data/
