@@ -1,6 +1,3 @@
-import React from 'react';
-import { TrendingUp, Clock, Award } from 'lucide-react';
-
 export function StatsView() {
   const weeklyData = [
     { day: '一', count: 1200 },

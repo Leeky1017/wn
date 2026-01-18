@@ -6,12 +6,6 @@ interface WorkflowViewProps {
   onSelectFile: (file: string) => void;
 }
 
-interface ArticleItem {
-  name: string;
-  wordCount?: number;
-  status?: string;
-}
-
 export function WorkflowView({ selectedFile, onSelectFile }: WorkflowViewProps) {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['草稿写作']));
 

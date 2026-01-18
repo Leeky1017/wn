@@ -108,3 +108,7 @@
 - Command: `gh run view 21115546200 --log-failed`
 - Key output: `react-hooks/set-state-in-effect, react-refresh/only-export-components, react-hooks/purity errors`
 - Evidence: `https://github.com/Leeky1017/wn/actions/runs/21115546200/job/60720544483`
+### 2026-01-19 01:18 lint-unused-vars
+- Command: `gh run view 21115577851 --log-failed`
+- Key output: `no-unused-vars in StatsView/WorkflowView`
+- Evidence: `https://github.com/Leeky1017/wn/actions/runs/21115577851/job/60720625054`
