@@ -91,3 +91,12 @@
 - Command: `openspec validate --specs --strict --no-interactive`
 - Key output: `3 passed, 0 failed`
 - Evidence: `.worktrees/issue-15-writenow-init`
+### 2026-01-19 01:09 checks-fail
+- Command: `gh pr checks --watch https://github.com/Leeky1017/wn/pull/16`
+- Key output: `ci fail: frontend directory missing`
+- Evidence: `https://github.com/Leeky1017/wn/actions/runs/21115465420/job/60720350977`
+
+### 2026-01-19 01:09 ci-log-2
+- Command: `gh run view 21115465420 --log-failed`
+- Key output: `ENOENT: no such file or directory, lstat .../frontend`
+- Evidence: `https://github.com/Leeky1017/wn/actions/runs/21115465420/job/60720350977`
