@@ -1,7 +1,7 @@
 # ISSUE-15
 - Issue: #15
 - Branch: task/15-writenow-init
-- PR: <fill-after-created>
+- PR: https://github.com/Leeky1017/wn/pull/16
 
 ## Plan
 - Capture current changes and source specs to craft the implementation strategy spec.
@@ -64,3 +64,30 @@
 - Command: `git push -u origin HEAD`
 - Key output: `new branch task/15-writenow-init`
 - Evidence: `https://github.com/Leeky1017/wn/pull/new/task/15-writenow-init`
+### 2026-01-19 00:56 preflight
+- Command: `scripts/agent_pr_preflight.sh`
+- Key output: `No such file or directory`
+- Evidence: `.worktrees/issue-15-writenow-init`
+### 2026-01-19 00:57 pr-create
+- Command: `gh pr create --fill --title "chore: WriteNow V2 foundation + implementation strategy (#15)" --body "Closes #15 ..."`
+- Key output: `https://github.com/Leeky1017/wn/pull/16`
+- Evidence: `https://github.com/Leeky1017/wn/pull/16`
+### 2026-01-19 01:06 auto-merge
+- Command: `gh pr merge --auto --squash https://github.com/Leeky1017/wn/pull/16`
+- Key output: `auto-merge enabled`
+- Evidence: `https://github.com/Leeky1017/wn/pull/16`
+
+### 2026-01-19 01:06 checks-watch
+- Command: `gh pr checks --watch https://github.com/Leeky1017/wn/pull/16`
+- Key output: `ci fail, merge-serial fail, openspec-log-guard pass`
+- Evidence: `https://github.com/Leeky1017/wn/actions/runs/21115321767`
+
+### 2026-01-19 01:06 ci-log
+- Command: `gh run view 21115321767 --log-failed`
+- Key output: `OpenSpec validate (strict) failed for 3 specs`
+- Evidence: `https://github.com/Leeky1017/wn/actions/runs/21115321767/job/60719988793`
+
+### 2026-01-19 01:06 openspec-validate
+- Command: `openspec validate --specs --strict --no-interactive`
+- Key output: `3 passed, 0 failed`
+- Evidence: `.worktrees/issue-15-writenow-init`

@@ -1,12 +1,13 @@
-# WriteNow 商业模型与产品规格
+# Spec: writenow-business-model
 
 ## Purpose
 
 定义 WriteNow 的商业定位、目标用户、付费套餐、功能权限矩阵和后端服务架构，作为产品开发的商业目标指引。
 
----
+## Requirements
 
-## 产品定位
+### Requirement: 产品定位 MUST
+产品定位 MUST 突出 AI 赋能与内容创作效率提升。
 
 WriteNow 是面向专业内容创作者的 AI 生产力工具，帮助用户更高效地创作和发布内容。
 
@@ -16,83 +17,51 @@ WriteNow 是面向专业内容创作者的 AI 生产力工具，帮助用户更�
 - 多平台一键发布
 - 数据驱动的创作管理
 
----
+- Evidence: `openspec/_ops/task_runs/ISSUE-15.md`
 
-## 目标用户
+#### Scenario: 定位一致
+- **WHEN** 对外描述产品价值
+- **THEN** 必须强调 AI 赋能、效率提升与多平台发布
 
-### 一级用户（高付费意愿）
+### Requirement: 目标用户 MUST
+目标用户 MUST 覆盖高付费、中付费与免费三类人群。
 
-画像：自媒体大V、企业内容团队、知识付费从业者、签约作者
-特点：年收入 50万+，时间值钱，愿意为效率付费
-预期 ARPU：￥800-2000/年
+- 一级用户（高付费意愿）：自媒体大V、企业内容团队、知识付费从业者、签约作者
+- 二级用户（中等付费意愿）：中腰部自媒体、副业写作者、电商文案、小红书博主
+- 三级用户（免费/低付费）：新手创作者、学生、兴趣写作者
 
-### 二级用户（中等付费意愿）
+- Evidence: `openspec/_ops/task_runs/ISSUE-15.md`
 
-画像：中腰部自媒体、副业写作者、电商文案、小红书博主
-特点：年收入 5-50万，需要看到明确价值
-预期 ARPU：￥200-500/年
+#### Scenario: 用户分层
+- **WHEN** 进行市场分析与功能规划
+- **THEN** 必须覆盖高付费、中付费与免费三类用户需求
 
-### 三级用户（免费/低付费）
+### Requirement: 付费套餐设计 MUST
+付费套餐 MUST 包含 Free、Pro、Team 三档并定义权益差异。
 
-画像：新手创作者、学生、兴趣写作者
-特点：预算有限，用于获客和传播
-策略：免费版 + 限额，促进转化
+#### Free（免费版）
+- 价格：￥0
+- AI：免费模型，每月 5 万字限额
+- 功能：完整本地编辑器、基础 SKILL、创作统计（仅本地）
+- 限制：无云同步、无高端模型
 
----
+#### Pro（专业版）
+- 价格：￥99/月 或 ￥799/年
+- AI：高端模型，每月 50 万字额度
+- 功能：云同步、多设备、全部 SKILL、导出与发布
 
-## 付费套餐设计
+#### Team（团队版）
+- 价格：￥199/人/月（最少 3 人）
+- 功能：团队协作、统一账单、团队统计
 
-### Free（免费版）
+- Evidence: `openspec/_ops/task_runs/ISSUE-15.md`
 
-价格：￥0
+#### Scenario: 套餐清单
+- **WHEN** 展示订阅套餐
+- **THEN** 必须包含 Free / Pro / Team 三档与核心差异
 
-AI 能力：
-- 免费模型（Gemini Flash / DeepSeek / Qwen）
-- 每月 5万字生成限额
-
-功能：
-- 完整本地编辑器
-- Markdown + 富文本双模式
-- 基础 SKILL（3个）
-- 创作统计（仅当前设备）
-
-限制：
-- 无云同步
-- 无高端模型
-- 无优先支持
-
-### Pro（专业版）
-
-价格：￥99/月 或 ￥799/年（约7折）
-
-AI 能力：
-- 高端模型（Claude Sonnet / GPT-4）
-- 每月 50万字生成额度
-- 超额部分按量付费
-
-功能：
-- 全部 Free 功能
-- 云同步 + 多设备
-- 全部 SKILL 模板（20+）
-- 自定义 SKILL 创建
-- 高级导出格式
-- 多平台发布
-- 优先技术支持
-
-### Team（团队版）
-
-价格：￥199/人/月（最少3人起）
-
-功能：
-- 全部 Pro 功能
-- 团队协作空间
-- 统一账单管理
-- 团队统计仪表盘
-- 专属客户成功经理（10人以上）
-
----
-
-## 功能权限矩阵
+### Requirement: 功能权限矩阵 MUST
+权限矩阵 MUST 明确各套餐可用功能与限制。
 
 | 功能 | Free | Pro | Team |
 |------|------|-----|------|
@@ -111,66 +80,58 @@ AI 能力：
 | 多平台发布 | 否 | 是 | 是 |
 | 技术支持 | 社区 | 优先 | 专属 |
 
----
+- Evidence: `openspec/_ops/task_runs/ISSUE-15.md`
 
-## Requirements
+#### Scenario: 权限对齐
+- **WHEN** 校验功能权限
+- **THEN** 必须符合矩阵中的套餐差异
 
-### Requirement: 后端服务架构
+### Requirement: 后端服务架构 MUST
+后端架构 MUST 支撑认证、订阅校验与 AI 代理。
 
 必须构建后端服务以支撑订阅制商业模式。
 
-#### Scenario: 用户认证
+- Evidence: `openspec/_ops/task_runs/ISSUE-15.md`
 
+#### Scenario: 用户认证
 - **WHEN** 用户首次使用应用
 - **THEN** 引导注册或登录
 - **THEN** 客户端获取 JWT Token 用于后续请求
 
-技术选型：Clerk（认证即服务）或 Supabase Auth
-
 #### Scenario: 订阅状态验证
-
 - **WHEN** 应用启动
 - **THEN** 检查用户订阅状态
 - **THEN** 根据套餐激活对应功能权限
 
-技术选型：Stripe（支付+订阅管理）
-
 #### Scenario: AI API 代理
-
 - **WHEN** 用户触发 AI 功能
 - **THEN** 客户端发送请求到后端 API
-- **THEN** 后端验证用户额度
-- **THEN** 后端调用 AI 服务并流式返回
+- **THEN** 后端验证用户额度并流式返回
 - **THEN** 后端记录用量
 
-技术选型：Vercel Serverless Functions 或 Railway
-
----
-
-### Requirement: 数据同步架构
+### Requirement: 数据同步架构 MUST
+数据同步 MUST 支持 Pro 及以上用户跨设备同步。
 
 Pro 及以上用户需要云同步功能。
 
-#### Scenario: 数据同步
+- Evidence: `openspec/_ops/task_runs/ISSUE-15.md`
 
+#### Scenario: 数据同步
 - **WHEN** Pro 用户修改文章
 - **THEN** 本地立即保存
 - **THEN** 后台异步同步到云端
 
-技术选型：Supabase（数据库+实时同步）
-
 #### Scenario: 冲突处理
-
 - **WHEN** 多设备同时修改
 - **THEN** 采用 Last-Write-Wins 策略
 - **THEN** 保留完整版本历史供用户回退
 
----
+### Requirement: 客户端授权机制 MUST
+客户端授权 MUST 支持离线与降级策略。
 
-### Requirement: 客户端授权机制
+- Evidence: `openspec/_ops/task_runs/ISSUE-15.md`
 
 #### Scenario: 离线使用
-
 - **WHEN** 用户无网络连接
 - **THEN** 允许本地编辑功能
 - **THEN** AI 功能不可用
@@ -178,90 +139,47 @@ Pro 及以上用户需要云同步功能。
 - **THEN** 重新验证订阅状态
 
 #### Scenario: 套餐降级
-
 - **WHEN** Pro 用户订阅到期且未续费
 - **THEN** 降级为 Free 功能
 - **THEN** 云端数据保留 30 天
 - **THEN** 本地数据永久保留
 
----
+### Requirement: 后端技术栈 MUST
+后端技术栈 MUST 优先采用 Supabase 等全托管方案。
 
-## 后端技术栈
+推荐方案：Supabase 一站式（Auth、数据库、Edge Functions、Storage、Realtime）。
 
-核心约束：开发者为纯 AI 编程模式（不写代码，只提思路），必须使用全托管服务，不碰服务器运维。
+- Evidence: `openspec/_ops/task_runs/ISSUE-15.md`
 
-推荐方案：Supabase 一站式
+#### Scenario: 托管服务选择
+- **WHEN** 后端能力落地
+- **THEN** 必须采用全托管方案并优先使用 Supabase
 
-Supabase 提供：
-- 用户认证（Supabase Auth）
-- 数据库（PostgreSQL）
-- API（Edge Functions）
-- 文件存储（Storage）
-- 实时同步（Realtime）
+### Requirement: 验证计划 MUST
+验证计划 MUST 同时覆盖商业与技术验证。
 
-一个平台搞定全部后端需求，git push 自动部署。
+商业验证：内测、付费测试。技术验证：认证、订阅、AI 代理与端到端流程。
 
-费用：
-- 免费额度：500MB 数据库 + 5万次 API 调用/月
-- Pro：$25/月（8GB 数据库）
+- Evidence: `openspec/_ops/task_runs/ISSUE-15.md`
 
-支付集成：
-- 国内用户：微信支付/支付宝（通过 LemonSqueezy 或自建）
-- 海外用户：Stripe
+#### Scenario: 商业验证
+- **WHEN** MVP 内测开启
+- **THEN** 招募目标用户并收集付费意愿
 
-预估月成本：
-- 0-1000 用户：免费或 $25/月
-- 1000-5000 用户：$50-100/月
-- 5000+ 用户：按量增长
+#### Scenario: 技术验证
+- **WHEN** 后端服务搭建完成
+- **THEN** 注册 → 订阅 → 使用 → 续费流程可跑通
 
-国内访问：
-- Supabase 新加坡区域，速度可接受
-- 先验证产品，用户量大了再优化
-
----
-
-## 验证计划
-
-### 商业验证
-
-1. MVP 内测
-   - 招募 50 名目标用户
-   - 免费使用 1 个月
-   - 收集反馈和付费意愿
-
-2. 付费测试
-   - 开放 Pro 订阅
-   - 验证定价接受度
-   - 调整套餐设计
-
-### 技术验证
-
-1. 后端服务搭建
-   - Clerk 认证集成
-   - Stripe 订阅集成
-   - AI 代理 API
-
-2. 端到端测试
-   - 注册 → 订阅 → 使用 → 续费完整流程
-
----
-
-## 实施优先级
+### Requirement: 实施优先级 MUST
+实施优先级 MUST 以 Phase 1 本地 MVP 为先。
 
 Phase 1（当前）：本地 MVP
-- 完成桌面应用核心功能
-- 暂不接入后端服务
-- 用于验证产品价值
-
 Phase 2：后端基础
-- 用户认证
-- 订阅管理
-- AI API 代理
-
 Phase 3：云服务
-- 数据同步
-- 多设备支持
-
 Phase 4：规模化
-- 团队版功能
-- 高级分析
+
+- Evidence: `openspec/specs/writenow-implementation-strategy/spec.md`
+
+#### Scenario: 阶段对齐
+- **WHEN** 查看实施策略
+- **THEN** 阶段划分与商业优先级一致

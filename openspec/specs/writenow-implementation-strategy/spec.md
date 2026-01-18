@@ -1,11 +1,12 @@
-# WriteNow 实施策略
+# Spec: writenow-implementation-strategy
 
 ## Purpose
+
 基于系统架构规范与商业模型规范，定义 WriteNow V2 的分阶段实施策略，明确 Phase 1 本地 MVP 与 Phase 2 后端服务的任务拆解、依赖关系、文件改动、工作量预估与验收方式。
 
 ## Requirements
 
-### Requirement: Phase 1 本地 MVP 详细任务分解
+### Requirement: Phase 1 本地 MVP 详细任务分解 MUST
 
 #### Task 1: 项目骨架与构建启动
 - 文件改动: `package.json`, `vite.config.ts`, `index.html`, `electron/main.ts`, `electron/preload.ts`, `src/main.tsx`, `src/App.tsx`
@@ -76,7 +77,13 @@
 - IPC 基础通道可调用，数据库文件初始化成功。
 - Tailwind 样式生效，与 Figma 组件一致。
 
-### Requirement: Phase 2 后端服务任务分解
+- Evidence: `openspec/_ops/task_runs/ISSUE-15.md`
+
+#### Scenario: Phase 1 任务覆盖
+- **WHEN** 审核实施策略
+- **THEN** Phase 1 包含 Tailwind 配置、IPC、SQLite、Zustand 与入口集成
+
+### Requirement: Phase 2 后端服务任务分解 MUST
 
 #### Task 1: Supabase 项目初始化
 - 文件改动: `.env`, `src/lib/supabase.ts`, `supabase/migrations/*.sql`
@@ -121,15 +128,8 @@
 - 数据在两台设备间同步且无明显冲突错误。
 - 订阅状态变化可触发功能权限调整。
 
-## Scenarios
+- Evidence: `openspec/_ops/task_runs/ISSUE-15.md`
 
-### Scenario: Phase 1 本地 MVP 验证
-- **WHEN** 运行 `npm run electron:dev`
-- **THEN** Electron 应用正常启动并展示主界面
-- **THEN** 通过 `window.writenow.invoke('db:article:list')` 得到空列表或默认值
-- **THEN** UI 组件响应 Zustand 状态变更
-
-### Scenario: Phase 2 后端服务验证
-- **WHEN** 用户登录并触发 AI SKILL
-- **THEN** AI 代理返回流式响应并记录用量
-- **THEN** 修改文章后 5 秒内同步到云端
+#### Scenario: Phase 2 任务覆盖
+- **WHEN** 审核实施策略
+- **THEN** Phase 2 包含 Supabase 初始化、认证、AI 代理与数据同步

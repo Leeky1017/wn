@@ -1,54 +1,46 @@
-# WriteNow V2 系统架构规范
+# Spec: writenow-v2-architecture
 
 ## Purpose
 
 定义 WriteNow V2 的完整系统架构，作为所有开发工作的权威参考。WriteNow 是一个 AI 驱动的文字创作 IDE，采用本地优先策略，专为内容创作者设计。
 
-## 技术栈
-
-### 前端 (Renderer Process)
-
-- 框架: React 18
-- 语言: TypeScript (strict mode)
-- 样式: Tailwind CSS v4
-- 组件库: 基于 shadcn/ui 的自定义组件 (src/components/ui/)
-- 图标: Lucide React
-- 构建工具: Vite
-
-### 桌面框架 (Main Process)
-
-- 框架: Electron
-- IPC: 类型安全的 Electron IPC
-- 本地数据: better-sqlite3
-
-### AI 服务
-
-- 云 API: Claude (Anthropic), GPT (OpenAI)
-- 本地模型: 预留接口 (Ollama 等)
-
----
-
 ## Requirements
 
-### Requirement: 系统分层架构
+### Requirement: 技术栈选型 MUST
+技术栈 MUST 覆盖 React、Electron、SQLite 与云端 AI。
+
+前端、桌面端、数据层与 AI 服务必须遵循以下技术栈：
+
+- 前端: React 18 + TypeScript (strict) + Tailwind CSS v4
+- 桌面框架: Electron
+- 本地数据: SQLite (better-sqlite3)
+- AI 服务: Claude / GPT 云 API
+
+- Evidence: `package.json`
+
+#### Scenario: 技术栈一致
+- **WHEN** 审核依赖声明
+- **THEN** `package.json` 包含 React、Tailwind、Electron 与 better-sqlite3 依赖
+
+### Requirement: 系统分层架构 MUST
+系统架构 MUST 明确区分表现层、业务逻辑层与数据层。
 
 系统分为三个主要层次：表现层、业务逻辑层、数据层。
 
-#### Scenario: 进程通信
+- Evidence: `openspec/_ops/task_runs/ISSUE-15.md`
 
+#### Scenario: 进程通信
 - **WHEN** 渲染进程需要访问本地文件或数据库
 - **THEN** 必须通过 Electron IPC 调用主进程 API
 - **THEN** 主进程执行实际的 I/O 操作并返回结果
 
 #### Scenario: AI 服务调用
-
 - **WHEN** 用户触发 AI SKILL
 - **THEN** 渲染进程通过 IPC 发送请求到主进程
 - **THEN** 主进程调用云 API 并流式返回结果
 
----
-
-### Requirement: 目录结构
+### Requirement: 目录结构 MUST
+目录结构 MUST 按规范组织 electron/ 与 src/ 等目录。
 
 项目目录结构必须遵循以下规范：
 
@@ -102,27 +94,27 @@ WriteNow/
 └── 配置文件 (package.json, tsconfig.json, etc.)
 ```
 
+- Evidence: `src/`
+
 #### Scenario: 新增功能模块
-
 - **WHEN** 需要添加新功能
-- **THEN** 前端 UI 放在 src/components/
-- **THEN** 状态逻辑放在 src/stores/
-- **THEN** 主进程逻辑放在 electron/ipc/
+- **THEN** 前端 UI 放在 `src/components/`
+- **THEN** 状态逻辑放在 `src/stores/`
+- **THEN** 主进程逻辑放在 `electron/ipc/`
 
----
+### Requirement: Electron IPC 通信规范 MUST
+IPC 规范 MUST 采用 domain:action 命名并保持类型一致。
 
-### Requirement: Electron IPC 通信规范
+- Evidence: `openspec/_ops/task_runs/ISSUE-15.md`
 
 #### Scenario: IPC Channel 命名
-
 - **WHEN** 定义新的 IPC 通道
 - **THEN** 使用 `domain:action` 格式命名
 - **THEN** 示例: `file:read`, `file:write`, `ai:skill:run`, `db:article:list`
 
 #### Scenario: IPC 类型安全
-
 - **WHEN** 定义 IPC 请求和响应
-- **THEN** 必须在 src/types/ipc.ts 中定义类型接口
+- **THEN** 必须在 `src/types/ipc.ts` 中定义类型接口
 - **THEN** 主进程和渲染进程共享同一类型定义
 
 ```typescript
@@ -143,11 +135,12 @@ export interface IpcChannels {
 }
 ```
 
----
-
-### Requirement: 数据层设计
+### Requirement: 数据层设计 MUST
+数据层 MUST 使用 SQLite (better-sqlite3) 并遵循定义的 schema。
 
 采用 SQLite 作为本地数据库，使用 better-sqlite3 进行同步操作。
+
+- Evidence: `openspec/_ops/task_runs/ISSUE-15.md`
 
 #### Scenario: 数据库 Schema
 
@@ -207,14 +200,14 @@ CREATE TABLE settings (
 ```
 
 #### Scenario: 数据访问
-
 - **WHEN** 渲染进程需要读写数据
 - **THEN** 通过 IPC 调用主进程的数据库模块
 - **THEN** 主进程同步执行 SQL 并返回结果
 
----
+### Requirement: AI 服务集成 (SKILL 系统) MUST
+AI 服务 MUST 通过 IPC 由主进程代理调用云 API。
 
-### Requirement: AI 服务集成 (SKILL 系统)
+- Evidence: `openspec/_ops/task_runs/ISSUE-15.md`
 
 #### Scenario: SKILL 定义结构
 
@@ -224,16 +217,16 @@ interface Skill {
   name: string;
   description: string;
   tag: string;  // 分类标签
-  
+
   // 提示词
   systemPrompt: string;
   userPromptTemplate: string;  // 支持 {{input}}, {{selection}}, {{context}} 占位符
-  
+
   // 模型配置
   model: 'claude-sonnet' | 'claude-opus' | 'gpt-4' | 'gpt-4-turbo';
   temperature?: number;
   maxTokens?: number;
-  
+
   // 元数据
   isBuiltin: boolean;
   createdAt: string;
@@ -242,7 +235,6 @@ interface Skill {
 ```
 
 #### Scenario: SKILL 执行流程
-
 - **WHEN** 用户点击 SKILL 卡片或输入指令
 - **THEN** 渲染进程收集当前编辑器内容和选区
 - **THEN** 通过 IPC 发送到主进程
@@ -251,20 +243,15 @@ interface Skill {
 - **THEN** 渲染进程展示 diff 并等待用户确认
 
 #### Scenario: 内置 SKILL 列表
+- **WHEN** 初始化默认 SKILL
+- **THEN** 包含生成大纲、润色、扩写、改写、事实核查等能力
 
-以下为首批内置 SKILL:
-
-1. **生成大纲** (generate-outline): 根据主题生成文章大纲
-2. **润色文本** (polish-text): 优化文本表达和用词
-3. **扩写内容** (expand-content): 扩展和丰富现有内容
-4. **改写风格** (rewrite-style): 转换文本风格和语气
-5. **事实核查** (fact-check): 验证内容中的事实和数据
-
----
-
-### Requirement: 状态管理
+### Requirement: 状态管理 MUST
+状态管理 MUST 使用 Zustand 并按领域拆分 store。
 
 采用 Zustand 进行状态管理，按领域拆分 store。
+
+- Evidence: `openspec/_ops/task_runs/ISSUE-15.md`
 
 #### Scenario: Store 划分
 
@@ -305,82 +292,50 @@ interface SettingsState {
 ```
 
 #### Scenario: 状态持久化
-
 - **WHEN** 用户关闭应用
 - **THEN** 关键状态 (设置、打开的文件等) 保存到 SQLite
 - **WHEN** 应用启动
 - **THEN** 从 SQLite 恢复上次的状态
 
----
+### Requirement: 构建与打包 MUST
+构建与打包流程 MUST 支持 dev/prod 与多平台输出。
 
-### Requirement: 构建与打包
+- Evidence: `package.json`
 
 #### Scenario: 开发模式
-
 - **WHEN** 开发者运行 `npm run dev`
 - **THEN** Vite 启动开发服务器
 - **THEN** Electron 加载 localhost:5173
 
 #### Scenario: 生产构建
-
 - **WHEN** 运行 `npm run build`
 - **THEN** Vite 构建前端到 dist/
 - **THEN** electron-builder 打包为平台安装包
 
 #### Scenario: 支持平台
+- **WHEN** 打包完成
+- **THEN** 产出 Windows `.exe`、macOS `.dmg`、Linux `.AppImage`
 
-- Windows: .exe 安装包
-- macOS: .dmg 安装包
-- Linux: .AppImage
+### Requirement: 验证计划 MUST
+验证计划 MUST 覆盖自动化测试与手动验证。
 
----
+- Evidence: `openspec/_ops/task_runs/ISSUE-15.md`
 
-## 验证计划
+#### Scenario: 自动化测试
+- **WHEN** 执行 `npm run test`
+- **THEN** 单元测试覆盖核心逻辑
 
-### 自动化测试
+#### Scenario: 手动验证
+- **WHEN** 开发者运行 `npm run dev`
+- **THEN** Electron 窗口正常显示
+- **THEN** 通过 `window.writenow.invoke()` 确认 IPC 通信正常
 
-1. 单元测试: 使用 Vitest 测试核心逻辑
-   - 命令: `npm run test`
+### Requirement: 实施阶段 MUST
+实施阶段 MUST 与实施策略 spec 的 Phase 规划保持一致。
 
-2. 组件测试: 使用 React Testing Library
-   - 命令: `npm run test:components`
+- Evidence: `openspec/specs/writenow-implementation-strategy/spec.md`
 
-### 手动验证
-
-1. 启动应用: `npm run dev` 后确认 Electron 窗口正常显示
-2. 验证 IPC: 在 DevTools 控制台调用 window.writenow.invoke() 确认通信正常
-3. 验证 UI: 对照 src/components/ 设计确认渲染正确
-
----
-
-## 实施阶段
-
-### Phase 1: 基础框架 (P0)
-
-- 配置 Tailwind CSS
-- 配置 Vite + React + TypeScript
-- 实现 Electron IPC 基础框架
-- 实现 SQLite 数据库初始化
-- 连接 src/ 目录组件到应用入口
-
-### Phase 2: 核心功能 (P0)
-
-- 实现文件管理 (创建、读取、保存)
-- 实现编辑器功能 (Markdown/Word 双模式)
-- 实现状态管理 (Zustand stores)
-- 集成 AI 服务 (Claude API)
-- 实现 SKILL 系统
-
-### Phase 3: 增强功能 (P1)
-
-- 实现创作统计
-- 实现番茄钟
-- 实现工作流管理
-- 实现导出功能
-
-### Phase 4: 抛光与发布 (P2)
-
-- 完善 UI 细节
-- 性能优化
-- 打包测试
-- 发布第一个版本
+#### Scenario: 阶段规划一致
+- **WHEN** 查看实施策略
+- **THEN** Phase 1 覆盖基础框架与本地 MVP
+- **THEN** Phase 2 覆盖后端服务与云同步
