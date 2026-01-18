@@ -1,25 +1,21 @@
-# WriteNow Project Constitution (OpenSpec)
+# WriteNow
 
-This file is a high-level entrypoint for WriteNow terms and non-negotiable boundaries.
-The canonical detailed constraints live in:
+AI 驱动的文字创作 IDE。本地优先，专为内容创作者设计。
 
-- `openspec/specs/writenow-constitution/spec.md`
+## 规范索引
 
-## Project definition
+- [writenow-v2-architecture](specs/writenow-v2-architecture/spec.md): V2 系统架构规范
+- [writenow-business-model](specs/writenow-business-model/spec.md): 商业模型与产品规格
+- [writenow-implementation-strategy](specs/writenow-implementation-strategy/spec.md): 实施策略与阶段计划
 
-WriteNow is an AI-driven writing IDE MVP: local Markdown workspace + AI-assisted edits with diff preview/apply + platform formatting export preview.
+## 技术栈
 
-## Non-negotiable boundaries
+- 前端: React 18 + TypeScript + Tailwind CSS
+- 桌面框架: Electron
+- 后端逻辑: Node.js (Electron Main Process)
+- 数据存储: SQLite (better-sqlite3)
+- AI 服务: 云 API 优先 (Claude, GPT)
 
-- Local-first: the core product MUST be usable without cloud accounts.
-- AI output MUST NOT silently mutate files: all content changes MUST be previewed and explicitly applied.
-- Data artifacts (workspace, snapshots, metadata) MUST be stored locally and must be reproducible.
-- Canonical constraints are tracked in OpenSpec specs; operational evidence is tracked in task run logs.
+## 工作流
 
-## Core terms (authoritative)
-
-- `workspace`: local Markdown files the user edits (default: `data/workspace/`).
-- `snapshot`: immutable historical content captured on write/revert (default: `data/snapshots/` + SQLite metadata).
-- `instruction`: a user command for the AI agent to transform content.
-- `diff`: a human-reviewable patch representing proposed edits.
-- `export`: platform-specific HTML output derived from Markdown.
+本项目采用 openspec-rulebook-github-delivery 工作流。
