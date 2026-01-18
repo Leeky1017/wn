@@ -60,3 +60,7 @@
 - Command: `GIT_EDITOR=true git rebase --continue`
 - Key output: `Successfully rebased and updated refs/heads/task/15-writenow-init.`
 - Evidence: `.worktrees/issue-15-writenow-init`
+### 2026-01-19 00:55 push
+- Command: `git push -u origin HEAD`
+- Key output: `new branch task/15-writenow-init`
+- Evidence: `https://github.com/Leeky1017/wn/pull/new/task/15-writenow-init`
