@@ -112,3 +112,7 @@
 - Command: `gh run view 21115577851 --log-failed`
 - Key output: `no-unused-vars in StatsView/WorkflowView`
 - Evidence: `https://github.com/Leeky1017/wn/actions/runs/21115577851/job/60720625054`
+### 2026-01-19 01:25 build-fail
+- Command: `gh run view 21115619011 --log-failed`
+- Key output: `tsc unused React imports + missing UI deps`
+- Evidence: `https://github.com/Leeky1017/wn/actions/runs/21115619011/job/60720728644`

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import {useState, useEffect} from 'react';
 import { Clock, Target, TrendingUp, Coffee, Play, Pause, X, Settings } from 'lucide-react';
 
 interface StatsBarProps {

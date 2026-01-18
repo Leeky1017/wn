@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Image, FileText, Link, Plus } from 'lucide-react';
 
 export function MaterialsView() {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import {useState, useEffect, useRef} from 'react';
 import { X, MoreHorizontal, Eye, Edit3, Columns, Bold, Italic, Underline, List, ListOrdered, Type, Heading1, Heading2, Heading3 } from 'lucide-react';
 import type { EditorMode, ViewMode } from '../App';
 

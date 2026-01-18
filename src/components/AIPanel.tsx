@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import {useState, useRef, useEffect} from 'react';
 import { Send, Plus, MoreHorizontal, ChevronDown, Check, Sparkles, Wand2, BookOpen, Languages, ChevronUp, Play } from 'lucide-react';
 
 interface Message {

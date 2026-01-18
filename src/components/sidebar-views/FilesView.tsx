@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import {useState} from 'react';
 import { ChevronRight, ChevronDown, FileText, Plus, MoreHorizontal } from 'lucide-react';
 
 interface FilesViewProps {

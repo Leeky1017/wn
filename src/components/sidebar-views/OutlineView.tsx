@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import {useMemo} from 'react';
 import { Hash, ChevronRight } from 'lucide-react';
 
 interface OutlineViewProps {

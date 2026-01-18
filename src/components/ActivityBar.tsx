@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Files, ListTree, Workflow, Image, Share2, BarChart3, Settings } from 'lucide-react';
 import type { SidebarView } from '../App';
 

@@ -1,4 +1,4 @@
-import React from 'react';
+
 import type { SidebarView } from '../App';
 import { FilesView } from './sidebar-views/FilesView';
 import { OutlineView } from './sidebar-views/OutlineView';

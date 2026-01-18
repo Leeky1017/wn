@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { CheckCircle, Circle, Settings } from 'lucide-react';
 
 export function PublishView() {

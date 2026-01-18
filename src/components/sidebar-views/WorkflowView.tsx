@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type ElementType } from 'react';
 import { ChevronRight, ChevronDown, FileText, Plus, Lightbulb, Edit, CheckCircle, Send } from 'lucide-react';
 
 interface WorkflowViewProps {
@@ -6,10 +6,23 @@ interface WorkflowViewProps {
   onSelectFile: (file: string) => void;
 }
 
+type WorkflowItem = {
+  name: string;
+  wordCount: number;
+  status?: string;
+};
+
+type WorkflowSection = {
+  title: string;
+  icon: ElementType;
+  color: string;
+  items: WorkflowItem[];
+};
+
 export function WorkflowView({ selectedFile, onSelectFile }: WorkflowViewProps) {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['草稿写作']));
 
-  const workflow = [
+  const workflow: WorkflowSection[] = [
     {
       title: '灵感收集',
       icon: Lightbulb,
