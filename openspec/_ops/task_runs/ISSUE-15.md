@@ -100,3 +100,7 @@
 - Command: `gh run view 21115465420 --log-failed`
 - Key output: `ENOENT: no such file or directory, lstat .../frontend`
 - Evidence: `https://github.com/Leeky1017/wn/actions/runs/21115465420/job/60720350977`
+### 2026-01-19 01:12 lint-fix
+- Command: `gh run view 21115503139 --log-failed`
+- Key output: `ESLint couldn't find eslint.config.js`
+- Evidence: `https://github.com/Leeky1017/wn/actions/runs/21115503139/job/60720444904`
