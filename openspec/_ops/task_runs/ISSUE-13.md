@@ -1,7 +1,7 @@
 # ISSUE-13
 - Issue: #13
 - Branch: task/13-ui-layout-proportions
-- PR: <fill-after-created>
+- PR: https://github.com/Leeky1017/wn/pull/14
 
 ## Plan
 - Capture layout + packaging requirements in rulebook task/specs and align UI with fixed four-zone layout
@@ -98,3 +98,13 @@
 - Command: `python -m compileall backend/app`
 - Key output: `python: command not found`
 - Evidence: `backend/app/`
+
+### 2025-01-18 21:30 PR preflight
+- Command: `scripts/agent_pr_preflight.sh`
+- Key output: `OK: no overlapping files with open PRs`
+- Evidence: `openspec/_ops/task_runs/ISSUE-13.md`
+
+### 2025-01-18 21:32 Create PR
+- Command: `gh pr create --title "fix: rebalance desktop layout and harden win packaging (#13)" --body "Closes #13 ..."`
+- Key output: `https://github.com/Leeky1017/wn/pull/14`
+- Evidence: PR #14
