@@ -47,3 +47,16 @@
 - Command: `git ls-files --others --exclude-standard > /tmp/issue-15-untracked.list && tar -cf /tmp/issue-15-untracked.tar -T /tmp/issue-15-untracked.list && tar -xf /tmp/issue-15-untracked.tar`
 - Key output: `untracked files copied`
 - Evidence: `/tmp/issue-15-untracked.list`
+### 2026-01-19 00:50 commit
+- Command: `git commit -m "chore: WriteNow V2 foundation - clean slate with Figma reference and OpenSpec (#15)"`
+- Key output: `201 files changed, 9573 insertions(+), 12253 deletions(-)`
+- Evidence: `git show --stat`
+### 2026-01-19 00:54 rebase
+- Command: `git fetch origin && git rebase origin/main`
+- Key output: `CONFLICT (modify/delete) ... resolved by keeping deletions`
+- Evidence: `.worktrees/issue-15-writenow-init`
+
+### 2026-01-19 00:54 rebase-continue
+- Command: `GIT_EDITOR=true git rebase --continue`
+- Key output: `Successfully rebased and updated refs/heads/task/15-writenow-init.`
+- Evidence: `.worktrees/issue-15-writenow-init`
