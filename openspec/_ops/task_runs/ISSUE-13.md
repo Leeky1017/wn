@@ -108,3 +108,8 @@
 - Command: `gh pr create --title "fix: rebalance desktop layout and harden win packaging (#13)" --body "Closes #13 ..."`
 - Key output: `https://github.com/Leeky1017/wn/pull/14`
 - Evidence: PR #14
+
+### 2025-01-18 21:35 Update lockfile for CI
+- Command: `pnpm -C frontend install --lockfile-only`
+- Key output: `lockfile updated`
+- Evidence: `frontend/pnpm-lock.yaml`
