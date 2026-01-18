@@ -104,3 +104,7 @@
 - Command: `gh run view 21115503139 --log-failed`
 - Key output: `ESLint couldn't find eslint.config.js`
 - Evidence: `https://github.com/Leeky1017/wn/actions/runs/21115503139/job/60720444904`
+### 2026-01-19 01:15 lint-rules
+- Command: `gh run view 21115546200 --log-failed`
+- Key output: `react-hooks/set-state-in-effect, react-refresh/only-export-components, react-hooks/purity errors`
+- Evidence: `https://github.com/Leeky1017/wn/actions/runs/21115546200/job/60720544483`
