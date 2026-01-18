@@ -120,3 +120,7 @@
 - Command: `gh run view 21115720641 --log-failed`
 - Key output: `buttonVariants missing + outline variant mismatch`
 - Evidence: `https://github.com/Leeky1017/wn/actions/runs/21115720641/job/60720962001`
+### 2026-01-19 01:31 checks-pass
+- Command: `gh pr checks --watch https://github.com/Leeky1017/wn/pull/16`
+- Key output: `ci pass, merge-serial pass, openspec-log-guard pass`
+- Evidence: `https://github.com/Leeky1017/wn/actions/runs/21115767323`
