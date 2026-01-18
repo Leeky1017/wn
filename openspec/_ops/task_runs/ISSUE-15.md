@@ -116,3 +116,7 @@
 - Command: `gh run view 21115619011 --log-failed`
 - Key output: `tsc unused React imports + missing UI deps`
 - Evidence: `https://github.com/Leeky1017/wn/actions/runs/21115619011/job/60720728644`
+### 2026-01-19 01:28 build-errors
+- Command: `gh run view 21115720641 --log-failed`
+- Key output: `buttonVariants missing + outline variant mismatch`
+- Evidence: `https://github.com/Leeky1017/wn/actions/runs/21115720641/job/60720962001`
