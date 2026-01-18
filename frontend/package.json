@@ -1,16 +1,61 @@
 {
-  "name": "frontend",
+  "name": "writenow",
+  "productName": "WriteNow",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "main": "electron/main.cjs",
+  "author": "Leeky",
+  "description": "AI 驱动的文字创作 IDE",
   "scripts": {
     "dev": "vite",
     "desktop:dev": "node scripts/dev-desktop.mjs",
     "desktop": "electron .",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "pack": "pnpm build && electron-builder --dir",
+    "dist": "pnpm build && electron-builder",
+    "dist:linux": "pnpm build && electron-builder --linux",
+    "dist:win": "pnpm build && electron-builder --win",
+    "dist:win:portable": "pnpm build && electron-builder --win portable",
+    "dist:mac": "pnpm build && electron-builder --mac"
+  },
+  "build": {
+    "appId": "com.leeky.writenow",
+    "productName": "WriteNow",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "backend-dist",
+        "to": "backend-dist",
+        "filter": ["**/*"]
+      }
+    ],
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Office"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.productivity"
+    }
   },
   "dependencies": {
     "@codemirror/lang-markdown": "^6.3.3",
@@ -18,8 +63,8 @@
     "@codemirror/state": "^6.5.4",
     "@codemirror/view": "^6.38.3",
     "@fontsource/fraunces": "^5.2.5",
-    "@fontsource/inter": "^5.2.5",
     "@fontsource/ibm-plex-mono": "^5.2.6",
+    "@fontsource/inter": "^5.2.5",
     "@fontsource/newsreader": "^5.2.5",
     "@fontsource/noto-sans-sc": "^5.2.5",
     "@fontsource/noto-serif-sc": "^5.2.5",
@@ -37,6 +82,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
     "electron": "^30.0.0",
+    "electron-builder": "^26.4.0",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",

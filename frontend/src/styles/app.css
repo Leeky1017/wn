@@ -6,7 +6,7 @@
 
 /* Lean Activity Bar */
 .activity-bar {
-  width: 48px;
+  width: var(--activity-width);
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border);
   display: flex;
@@ -62,7 +62,7 @@
 }
 
 .sidebar {
-  width: 260px;
+  width: var(--sidebar-width);
   min-width: 0;
   flex-shrink: 0;
   background: var(--bg-sidebar);
@@ -263,12 +263,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px 20px 100px;
+  padding: 32px 20px 80px;
 }
 
 .format-toolbar {
   width: 100%;
-  max-width: 760px;
+  max-width: var(--canvas-max);
   background: white;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -305,10 +305,10 @@
 
 .paper {
   width: 100%;
-  max-width: 760px;
+  max-width: var(--canvas-max);
   background: var(--bg-paper);
   min-height: 1000px;
-  padding: 80px 100px;
+  padding: var(--canvas-padding-y) var(--canvas-padding-x);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
   border-radius: 2px;
 }
@@ -346,7 +346,7 @@
 
 .preview-overlay {
   width: 100%;
-  max-width: 760px;
+  max-width: var(--canvas-max);
   margin: 40px auto;
   background: white;
   border: 1px solid var(--border);
@@ -357,7 +357,7 @@
 
 /* AI Companion (Right) - Skills Oriented */
 .ai-pane {
-  width: 320px;
+  width: var(--ai-width);
   min-width: 280px;
   flex-shrink: 0;
   background: var(--bg-paper);
